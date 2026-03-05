@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HomeSync 家庭管家 | 真正連動版</title>
+    <title>HomeSync 家庭管家 | 終極連動版</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -14,14 +14,14 @@
         :root {
             --pri: #6366f1;
             --pri-bg: #f5f6ff;
-            --bg: #f9fafb;
+            --bg: #f1f5f9;
             --w: #fff;
             --txt: #111827;
             --sub: #6b7280;
             --grn: #10b981;
             --red: #ef4444;
             --rad: 28px;
-            --sh: 0 15px 30px -5px rgba(0, 0, 0, 0.1);
+            --sh: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -33,7 +33,7 @@
 
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background: #f1f5f9;
+            background: #e5e7eb;
             color: var(--txt);
             display: flex;
             justify-content: center;
@@ -49,11 +49,10 @@
             position: relative;
             min-height: 100vh;
             box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
-            overflow-x: hidden;
         }
 
-        /* 引導介面 */
-        .onboard {
+        /* 全螢幕遮罩層 */
+        .overlay {
             position: fixed;
             inset: 0;
             z-index: 9999;
@@ -61,12 +60,12 @@
             display: flex;
             flex-direction: column;
             padding: 40px 25px;
+            transition: 0.4s;
             max-width: 440px;
             margin: 0 auto;
-            transition: 0.4s;
         }
 
-        .onboard.hide {
+        .overlay.hide {
             opacity: 0;
             pointer-events: none;
             transform: translateY(30px);
@@ -81,25 +80,25 @@
             text-align: center;
         }
 
-        .step.active {
+        .step.on {
             display: flex;
         }
 
-        .onboard h1 {
+        .overlay h1 {
             font-size: 34px;
             font-weight: 900;
             color: var(--pri);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
-        .onboard p {
+        .overlay p {
             color: var(--sub);
             font-size: 15px;
             margin-bottom: 30px;
             line-height: 1.6;
         }
 
-        .inp-f {
+        .inp-x {
             width: 100%;
             border: 3px solid #f1f5f9;
             background: #f8fafc;
@@ -113,12 +112,12 @@
             transition: 0.2s;
         }
 
-        .inp-f:focus {
+        .inp-x:focus {
             border-color: var(--pri);
             background: #fff;
         }
 
-        .btn-p {
+        .btn-x {
             width: 100%;
             padding: 20px;
             border-radius: 100px;
@@ -128,61 +127,54 @@
             font-weight: 900;
             border: none;
             cursor: pointer;
-            box-shadow: 0 12px 25px rgba(99, 102, 241, 0.35);
-            transition: 0.2s;
+            box-shadow: 0 12px 25px rgba(99, 102, 241, 0.3);
         }
 
-        .btn-p:active {
-            transform: scale(0.96);
-        }
-
-        /* 角色網格 (修復不連動關鍵) */
+        /* 角色網格 */
         .role-grid {
             width: 100%;
-            max-height: 45vh;
-            overflow-y: auto;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin-bottom: 20px;
-            padding: 10px;
+            margin-bottom: 25px;
+            max-height: 35vh;
+            overflow-y: auto;
+            padding: 5px;
         }
 
         .role-i {
-            background: #fff;
+            background: #f8fafc;
             border: 3px solid #f1f5f9;
             border-radius: 25px;
-            padding: 25px 10px;
+            padding: 20px 10px;
             cursor: pointer;
-            transition: 0.2s;
             text-align: center;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+            transition: 0.2s;
         }
 
         .role-i.on {
             border-color: var(--pri);
             background: var(--pri-bg);
-            transform: scale(1.05);
+            transform: scale(1.03);
         }
 
         .role-i .em {
-            font-size: 48px;
+            font-size: 40px;
             display: block;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
 
         .role-i b {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 900;
         }
 
-        .add-tool {
+        .input-box {
             background: #f1f5f9;
-            padding: 25px;
-            border-radius: 30px;
+            padding: 20px;
+            border-radius: 25px;
             width: 100%;
             margin-bottom: 20px;
-            text-align: left;
         }
 
         .inp-row {
@@ -193,10 +185,9 @@
         .inp-row input {
             flex: 1;
             border: none;
-            padding: 16px;
-            border-radius: 18px;
+            padding: 15px;
+            border-radius: 15px;
             font-weight: 800;
-            font-size: 16px;
             outline: none;
         }
 
@@ -204,8 +195,8 @@
             background: var(--pri);
             color: #fff;
             border: none;
-            padding: 0 25px;
-            border-radius: 18px;
+            padding: 0 20px;
+            border-radius: 15px;
             font-weight: 900;
         }
 
@@ -216,7 +207,7 @@
             flex-direction: column;
         }
 
-        .header {
+        .top {
             padding: 30px 20px 20px;
             background: #fff;
             border-bottom: 1px solid #f1f5f9;
@@ -225,20 +216,33 @@
             z-index: 100;
         }
 
-        .header-row {
+        .top-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 20px;
         }
 
-        .header h2 {
+        .top h2 {
             font-weight: 900;
             color: var(--pri);
             font-size: 26px;
         }
 
-        .share-pill {
+        .sync-tag {
+            font-size: 10px;
+            color: var(--grn);
+            background: #d1fae5;
+            padding: 4px 10px;
+            border-radius: 100px;
+            font-weight: 900;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 5px;
+        }
+
+        .share-btn {
             background: #fcd34d;
             color: #92400e;
             padding: 10px 18px;
@@ -246,47 +250,33 @@
             font-size: 13px;
             font-weight: 900;
             cursor: pointer;
-            animation: pulse 2s infinite;
+            box-shadow: 0 4px 10px rgba(252, 211, 77, 0.3);
         }
 
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(252, 211, 77, 0.7);
-            }
-
-            70% {
-                box-shadow: 0 0 0 10px rgba(252, 211, 77, 0);
-            }
-
-            100% {
-                box-shadow: 0 0 0 0 rgba(252, 211, 77, 0);
-            }
-        }
-
-        .wall {
+        .ppl-wall {
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
 
-        .p-card {
+        .ppl-i {
             display: flex;
             align-items: center;
             gap: 15px;
             padding: 15px 20px;
-            background: #f9fafb;
+            background: #f8fafc;
             border-radius: 22px;
             transition: 0.3s;
         }
 
-        .p-card.me {
+        .ppl-i.me {
             background: var(--pri-bg);
             border-left: 6px solid var(--pri);
         }
 
-        .p-av {
-            width: 50px;
-            height: 50px;
+        .ppl-av {
+            width: 48px;
+            height: 48px;
             background: #fff;
             border-radius: 50%;
             display: flex;
@@ -298,13 +288,8 @@
 
         .main {
             flex: 1;
-            padding: 25px 20px 140px;
-        }
-
-        .empty-state {
+            padding: 30px 20px 140px;
             text-align: center;
-            margin-top: 80px;
-            color: var(--sub);
         }
 
         .nav {
@@ -330,7 +315,7 @@
             font-weight: 900;
         }
 
-        .nav-i.on {
+        .nav-i.active {
             color: var(--pri);
         }
 
@@ -361,49 +346,51 @@
 <body>
 
     <div class="shell">
-        <div class="onboard" id="ob-wall">
-            <div class="step" id="step-name">
-                <div style="font-size:65px">🏰</div>
-                <h1>幸福之家</h1>
-                <p>第一步：請先為您的家庭空間命名</p>
-                <input class="inp-f" id="i-f-name" placeholder="例如：亮亮家、幸福小屋" maxlength="12">
-                <button class="btn-p" onclick="doNameHome()">按此建立家庭 ✨</button>
+        <!-- 引導流程 -->
+        <div class="overlay" id="ov">
+            <div class="step" id="st-n">
+                <div style="font-size:65px; margin-bottom:15px">🏰</div>
+                <h1>建立家庭</h1>
+                <p>歡迎使用 HomeSync！<br>請先為您的家庭空間取個名字。</p>
+                <input class="inp-x" id="in-f-n" placeholder="例如：亮亮家、幸福之家" maxlength="12">
+                <button class="btn-x" onclick="goStep2()">開始建立 ✨</button>
             </div>
 
-            <div class="step" id="step-role">
-                <h1 id="role-title">我是誰？</h1>
-                <p>第二步：請在下方「新增」或「點選」您的身分</p>
-                <div class="role-grid" id="role-render"></div>
-                <div class="add-tool">
+            <div class="step" id="st-r">
+                <h1 id="r-title">我是誰？</h1>
+                <p>請建立或選擇您的身分，開始實時連動。</p>
+                <div class="role-grid" id="rg-render"></div>
+                <div class="input-box">
                     <div class="inp-row">
-                        <input id="i-m-name" placeholder="輸入您的名字 (如:爸爸)" maxlength="6">
-                        <button onclick="addMember()">新增</button>
+                        <input id="in-m-n" placeholder="輸入您的名字" maxlength="6">
+                        <button onclick="addM()">新增</button>
                     </div>
                 </div>
-                <button class="btn-p" id="btn-enter" disabled onclick="enterTool()">確定是我，進入工具 ✨</button>
+                <button class="btn-x" id="btn-go" disabled onclick="bootApp()">確定是我，進入！ ✨</button>
             </div>
         </div>
 
+        <!-- 主 App -->
         <div id="app">
-            <header class="header">
-                <div class="header-row">
+            <header class="top">
+                <div class="top-row">
                     <div>
-                        <h2 id="show-f-name">HomeSync</h2>
-                        <div style="font-size:10px; color:var(--grn); font-weight:900; margin-top:5px">● 實時雲端同步中</div>
+                        <h2 id="top-f-n">HomeSync</h2>
+                        <div class="sync-tag">● 安全同步中</div>
                     </div>
-                    <div class="share-pill" onclick="copyLink()">🔗 分享給家人</div>
+                    <div class="share-btn" onclick="copyLink()">🔗 分享與連動</div>
                 </div>
-                <div class="wall" id="wall-render"></div>
+                <div class="ppl-wall" id="ppl-render"></div>
             </header>
             <main class="main">
-                <div class="empty-state">
-                    <div style="font-size:70px">🌈</div>
-                    <h3 style="margin-top:15px">家庭空間已連動</h3>
-                    <p style="font-size:13px; margin-top:10px">您與家人的任務與物品會在這裡同步顯示</p>
+                <div style="margin-top:60px">
+                    <div style="font-size:70px">💡</div>
+                    <h3 style="margin-top:20px">已與家人即時連動</h3>
+                    <p style="font-size:14px; color:var(--sub); margin-top:10px">您與家人的任何變動，雙方都會同步看見。</p>
                 </div>
             </main>
             <nav class="nav">
-                <div class="nav-i on"><span class="ic">🏠</span>首頁</div>
+                <div class="nav-i active"><span class="ic">🏠</span>首頁</div>
                 <div class="nav-i"><span class="ic">✋</span>託付</div>
                 <div class="nav-i"><span class="ic">🛒</span>採買</div>
                 <div class="nav-i"><span class="ic">📦</span>庫存</div>
@@ -414,89 +401,93 @@
     <div id="toast"></div>
 
     <script>
-        // --- 分項連動引擎 (V10) ---
-        const config = { databaseURL: "https://homesync-private-default-rtdb.firebaseio.com" };
-        firebase.initializeApp(config);
+        // --- 絕對同步引擎 (V11) ---
+        const dbURL = "https://homesync-private-default-rtdb.firebaseio.com";
+        firebase.initializeApp({ databaseURL: dbURL });
         const rdb = firebase.database();
 
-        let famK = '', famN = '', meId = '', members = {};
+        let famK = '', famN = '', meId = '', memberData = {};
 
         (function init() {
             const p = new URLSearchParams(location.search);
             const joinCode = p.get('join');
-            const savedK = localStorage.getItem('hs_k_v10');
+            const savedK = localStorage.getItem('hs_k_v11');
 
             if (joinCode) {
+                // 【家人模式】：直接同步對方的家
                 famK = joinCode;
+                localStorage.setItem('hs_k_v11', joinCode);
                 startSync();
             } else if (savedK) {
+                // 【老用戶模式】
                 famK = savedK;
                 meId = localStorage.getItem('hs_me_' + famK);
                 startSync();
                 if (meId) {
-                    document.getElementById('ob-wall').classList.add('hide');
+                    document.getElementById('ov').classList.add('hide');
                     document.getElementById('app').style.display = 'flex';
                 }
             } else {
-                show('name');
+                // 【新屋主模式】
+                showStep('n');
             }
         })();
 
-        function show(s) {
-            document.querySelectorAll('.step').forEach(d => d.classList.remove('active'));
-            document.getElementById('step-' + s).classList.add('active');
+        function showStep(s) {
+            document.querySelectorAll('.step').forEach(d => d.classList.remove('on'));
+            document.getElementById('st-' + s).classList.add('on');
         }
 
-        // 關鍵修復：分項同步，不互相蓋掉
         function startSync() {
-            // 獲取家名
-            rdb.ref(`hs/v10/${famK}/name`).on('value', s => {
+            // 1. 同步家名
+            rdb.ref(`hs/v11/${famK}/name`).on('value', s => {
                 famN = s.val() || '我們的家';
-                document.getElementById('show-f-name').textContent = famN;
-                document.getElementById('role-title').textContent = famN + " 是誰？";
+                document.getElementById('top-f-n').textContent = famN;
+                document.getElementById('r-title').textContent = famN + " 是誰？";
             });
 
-            // 實時監聽成員（分項讀取）
-            rdb.ref(`hs/v10/${famK}/m`).on('value', snap => {
+            // 2. 同步成員 (重點：修正 V10 的變數衝突)
+            rdb.ref(`hs/v11/${famK}/m`).on('value', snap => {
                 const data = snap.val() || {};
-                members = {};
+                memberData = {}; // 清空並更新
                 Object.keys(data).forEach(id => {
                     try {
                         const bytes = CryptoJS.AES.decrypt(data[id], famK);
-                        members[id] = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+                        memberData[id] = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
                     } catch (e) { }
                 });
-                renderUI();
+                renderAllUI();
             });
-            show('role');
+            showStep('r');
         }
 
-        function doNameHome() {
-            const val = document.getElementById('i-f-name').value.trim();
-            if (!val) return;
-            famN = val;
-            famK = 'F' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('hs_k_v10', famK);
-            rdb.ref(`hs/v10/${famK}/name`).set(famN);
+        function goStep2() {
+            const n = document.getElementById('in-f-n').value.trim();
+            if (!n) return;
+            famN = n;
+            famK = 'H' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('hs_k_v11', famK);
+            rdb.ref(`hs/v11/${famK}/name`).set(famN);
             startSync();
         }
 
-        function renderUI() {
-            // 渲染選擇頁
-            const grid = document.getElementById('role-render');
-            grid.innerHTML = Object.keys(members).map(id => `
+        function renderAllUI() {
+            // 渲染選擇清單
+            const grid = document.getElementById('rg-render');
+            grid.innerHTML = Object.keys(memberData).map(id => `
         <div class="role-i ${meId == id ? 'on' : ''}" onclick="setMe('${id}')">
-            <span class="em">${members[id].e || '🙋'}</span>
-            <b>${members[id].n}</b>
+            <span class="em">${memberData[id].e || '🙋'}</span>
+            <b>${memberData[id].n}</b>
         </div>
     `).join('');
 
-            // 渲染主牆
-            if (meId) {
-                document.getElementById('wall-render').innerHTML = Object.keys(members).map(id => `
-            <div class="p-card ${id == meId ? 'me' : ''}">
-                <div class="p-av">${members[id].e || '🙋'}</div>
-                <b>${members[id].n}${id == meId ? ' (我)' : ''}</b>
+            // 渲染主 App 成員牆
+            const wall = document.getElementById('ppl-render');
+            if (meId && wall) {
+                wall.innerHTML = Object.keys(memberData).map(id => `
+            <div class="ppl-i ${id == meId ? 'me' : ''}">
+                <div class="ppl-av">${memberData[id].e || '🙋'}</div>
+                <b>${memberData[id].n}${id == meId ? ' (我)' : ''}</b>
             </div>
         `).join('');
             }
@@ -504,32 +495,34 @@
 
         function setMe(id) {
             meId = id;
-            renderUI();
-            document.getElementById('btn-enter').disabled = false;
+            renderAllUI();
+            document.getElementById('btn-go').disabled = false;
         }
 
-        function addMember() {
-            const n = document.getElementById('i-m-name').value.trim();
+        function addM() {
+            const n = document.getElementById('in-m-n').value.trim();
             if (!n) return;
             const mid = 'M' + Date.now();
             const mObj = { n, e: '🙋', ts: Date.now() };
             const enc = CryptoJS.AES.encrypt(JSON.stringify(mObj), famK).toString();
-            rdb.ref(`hs/v10/${famK}/m/${mid}`).set(enc); // 分項寫入，不影響他人
-            document.getElementById('i-m-name').value = '';
-            toast('新增成功！請點選您的頭像進入');
+
+            // 分項寫入，絕不覆蓋別人
+            rdb.ref(`hs/v11/${famK}/m/${mid}`).set(enc);
+            document.getElementById('in-m-n').value = '';
+            toast('新增成功！請選取您的名字進入');
         }
 
-        function enterTool() {
+        function bootApp() {
             if (!meId) return;
             localStorage.setItem('hs_me_' + famK, meId);
-            document.getElementById('ob-wall').classList.add('hide');
+            document.getElementById('ov').classList.add('hide');
             document.getElementById('app').style.display = 'flex';
-            renderUI();
+            renderAllUI();
         }
 
         function copyLink() {
             const url = window.location.href.split('?')[0] + '?join=' + famK;
-            navigator.clipboard.writeText(url).then(() => toast('🔗 家庭同步連結已複製！傳給家人吧'));
+            navigator.clipboard.writeText(url).then(() => toast('🔗 連動連結已複製！傳給家人吧'));
         }
 
         function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.style.opacity = 1; setTimeout(() => t.style.opacity = 0, 2500); }
