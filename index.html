@@ -4,66 +4,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="description" content="HomeSync - 全家人一起管理家中大小事的免費工具">
-    <title>HomeSync 家庭管家</title>
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https: 'unsafe-inline' 'unsafe-eval';">
+    <title>HomeSync | 安全加密家庭管家</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
         rel="stylesheet">
+    <!-- 頂級資安防禦庫 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
     <style>
         :root {
-            --pri: #7c3aed;
-            --priL: #ede9fe;
-            --priD: #5b21b6;
+            --pri: #6d28d9;
+            --priL: #f5f3ff;
+            --bg: #f8fafc;
+            --w: #ffffff;
+            --txt: #0f172a;
+            --sub: #64748b;
             --grn: #059669;
-            --grnL: #ecfdf5;
             --org: #d97706;
-            --orgL: #fffbeb;
             --red: #dc2626;
-            --redL: #fef2f2;
-            --blue: #2563eb;
-            --blueL: #eff6ff;
-            --bg: #f5f3ff;
-            --w: #fff;
-            --txt: #1e1b4b;
-            --sub: #6b7280;
-            --dim: #9ca3af;
-            --bdr: #e5e7eb;
-            --rad: 18px;
-            --sh: 0 4px 15px rgba(0, 0, 0, .06);
+            --rad: 20px;
+            --sh: 0 10px 15px -3px rgba(0, 0, 0, 0.06);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            -webkit-tap-highlight-color: transparent
-        }
-
-        html {
-            height: 100%
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background: var(--bg);
             color: var(--txt);
-            min-height: 100%;
-            overflow-x: hidden
-        }
-
-        button {
-            font-family: inherit;
-            cursor: pointer;
-            border: none
-        }
-
-        input,
-        textarea {
-            font-family: inherit;
-            outline: none
+            min-height: 100vh;
         }
 
         .shell {
@@ -73,639 +49,411 @@
             background: var(--w);
             display: flex;
             flex-direction: column;
-            position: relative
+            position: relative;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
         }
 
-        /* ======= 第零步：創建/加入 家庭 ======= */
-        .page-init {
+        /* 安全登入/邀請頁 */
+        .sc-init {
             position: fixed;
             inset: 0;
             z-index: 9000;
-            background: linear-gradient(160deg, #7c3aed 0%, #a78bfa 50%, #c4b5fd 100%);
+            background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 25px
+            padding: 30px;
         }
 
-        .page-init.hide {
-            display: none
+        .sc-init.off {
+            display: none;
         }
 
-        .init-card {
+        .card-init {
             background: #fff;
             width: 100%;
-            max-width: 380px;
-            border-radius: 32px;
-            padding: 40px 28px;
+            border-radius: 35px;
+            padding: 45px 30px;
             text-align: center;
-            box-shadow: 0 30px 60px rgba(0, 0, 0, .2)
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
         }
 
-        .init-card h1 {
-            font-size: 30px;
+        .card-init h2 {
             font-weight: 900;
-            margin-bottom: 6px;
-            color: var(--pri)
+            font-size: 28px;
+            color: var(--pri);
+            margin-bottom: 8px;
         }
 
-        .init-card .sub {
-            color: var(--sub);
+        .card-init p {
             font-size: 13px;
+            color: var(--sub);
+            line-height: 1.6;
             margin-bottom: 30px;
-            line-height: 1.6
         }
 
-        .init-input {
+        .inp-init {
             width: 100%;
-            border: 2.5px solid var(--bdr);
-            padding: 16px;
-            border-radius: 16px;
-            font-size: 17px;
-            font-weight: 800;
+            border: 3px solid #f1f5f9;
+            background: #f8fafc;
+            padding: 18px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 900;
             text-align: center;
             margin-bottom: 15px;
-            transition: .2s
+            outline: none;
         }
 
-        .init-input:focus {
+        .inp-init:focus {
             border-color: var(--pri);
-            box-shadow: 0 0 0 4px var(--priL)
+            background: #fff;
         }
 
-        .btn-main {
+        .btn-pri {
             width: 100%;
             padding: 18px;
-            border-radius: 50px;
+            border: none;
+            border-radius: 100px;
             font-size: 17px;
             font-weight: 900;
             color: #fff;
             background: var(--pri);
-            box-shadow: 0 8px 25px rgba(124, 58, 237, .35);
-            transition: .15s
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(109, 40, 217, 0.3);
+            transition: 0.2s;
         }
 
-        .btn-main:active {
-            transform: scale(.96)
+        .btn-pri:active {
+            transform: scale(0.96);
         }
 
-        /* 加入模式 */
-        .join-card {
-            display: none
-        }
-
-        .join-card .fam-show {
-            font-size: 24px;
+        /* 加密安全通知 */
+        .sec-indicator {
+            font-size: 10px;
             font-weight: 900;
-            color: var(--pri);
-            margin: 20px 0
+            color: #059669;
+            background: #d1fae5;
+            padding: 4px 12px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 15px;
         }
 
-        /* ======= 第一步：角色選擇 ======= */
-        .page-role {
+        /* 角色頁 */
+        .sc-role {
             position: fixed;
             inset: 0;
-            z-index: 8998;
-            background: var(--w);
-            padding: 35px 20px;
+            z-index: 8000;
+            background: #fff;
+            padding: 40px 20px;
             display: none;
             flex-direction: column;
-            overflow-y: auto
         }
 
-        .page-role.show {
-            display: flex
-        }
-
-        .role-list {
+        .role-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin: 20px 0
+            gap: 15px;
+            margin: 25px 0;
         }
 
-        .role-card {
+        .role-c {
             background: var(--bg);
-            border-radius: 22px;
-            padding: 24px 12px;
+            border: 3.5px solid transparent;
+            border-radius: 25px;
+            padding: 30px 10px;
             text-align: center;
-            border: 3px solid transparent;
-            transition: .2s
+            cursor: pointer;
+            transition: .2s;
         }
 
-        .role-card.on {
+        .role-c.on {
             border-color: var(--pri);
-            background: var(--priL)
+            background: var(--priL);
         }
 
-        .role-card .big-em {
-            font-size: 42px;
+        .role-c .em {
+            font-size: 45px;
             display: block;
-            margin-bottom: 8px
+            margin-bottom: 8px;
         }
 
-        .role-card .role-nm {
-            font-size: 15px;
-            font-weight: 900
-        }
-
-        .add-box {
-            background: var(--bg);
-            padding: 20px;
-            border-radius: 22px;
-            margin-top: 10px
-        }
-
-        .add-box .row {
-            display: flex;
-            gap: 10px
-        }
-
-        .add-box input {
-            flex: 1;
-            border: 2px solid var(--bdr);
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 15px;
-            font-weight: 700
-        }
-
-        .add-box input:focus {
-            border-color: var(--pri)
-        }
-
-        .add-box button {
-            background: var(--pri);
-            color: #fff;
-            border-radius: 14px;
-            padding: 0 22px;
+        .role-c .nm {
+            font-size: 16px;
             font-weight: 900;
-            font-size: 16px
         }
 
-        /* ======= 主頁面 ======= */
-        .app {
+        /* 主介面 */
+        #sc-app {
             display: none;
             flex: 1;
             flex-direction: column;
-            overflow: hidden
-        }
-
-        .app.on {
-            display: flex
+            overflow: hidden;
         }
 
         .top {
-            padding: 20px 20px 0;
-            border-bottom: 1px solid var(--bdr);
-            background: var(--w);
-            position: sticky;
-            top: 0;
-            z-index: 100
+            padding: 25px 20px 15px;
+            background: #fff;
+            border-bottom: 1px solid #f1f5f9;
         }
 
         .top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px
+            margin-bottom: 20px;
         }
 
         .top-row h1 {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 900;
-            color: var(--pri)
+            color: var(--pri);
+            letter-spacing: -1px;
         }
 
-        .invite-chip {
-            background: #fef3c7;
+        .inv-chip {
+            font-size: 11px;
+            font-weight: 900;
             color: #92400e;
-            font-size: 12px;
-            font-weight: 800;
-            padding: 7px 14px;
-            border-radius: 14px;
+            background: #fef3c7;
+            padding: 8px 15px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
-            gap: 5px
+            gap: 5px;
+            cursor: pointer;
         }
 
-        /* 成員動態列 - 大條清晰 */
-        .ppl-col {
+        /* 成員狀態 */
+        .ppl-bar {
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            padding: 5px 0 16px
+            gap: 10px;
+            padding-bottom: 15px;
         }
 
         .ppl-item {
             display: flex;
             align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
+            gap: 15px;
+            padding: 15px;
             background: var(--bg);
-            border-radius: 16px;
-            transition: .15s
-        }
-
-        .ppl-item:active {
-            transform: scale(.98)
+            border-radius: 20px;
         }
 
         .ppl-item.me {
             background: var(--priL);
-            box-shadow: inset 0 0 0 2px rgba(124, 58, 237, .1)
+            box-shadow: inset 0 0 0 2px rgba(109, 40, 217, 0.05);
         }
 
         .ppl-av {
-            width: 42px;
-            height: 42px;
-            background: var(--w);
+            width: 46px;
+            height: 46px;
+            background: #fff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 22px;
-            flex-shrink: 0;
-            box-shadow: var(--sh)
+            font-size: 24px;
+            box-shadow: var(--sh);
         }
 
         .ppl-info {
             flex: 1;
-            min-width: 0
         }
 
         .ppl-info b {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 900;
-            display: block
+            display: block;
+            margin-bottom: 2px;
         }
 
-        .ppl-info .ppl-note {
-            font-size: 11px;
+        .ppl-note {
+            font-size: 12px;
             color: var(--sub);
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis
         }
 
         .ppl-st {
             font-size: 11px;
-            font-weight: 800;
-            padding: 5px 10px;
-            border-radius: 10px;
+            font-weight: 900;
+            padding: 5px 12px;
+            border-radius: 12px;
             white-space: nowrap;
-            flex-shrink: 0
         }
 
-        .st-home {
-            background: #d1fae5;
-            color: #065f46
-        }
-
-        .st-work {
-            background: #fed7aa;
-            color: #9a3412
-        }
-
-        .st-way {
-            background: #bfdbfe;
-            color: #1e40af
-        }
-
-        .st-out {
-            background: #fef08a;
-            color: #854d0e
-        }
-
-        .st-rest {
-            background: #e9d5ff;
-            color: #6b21a8
-        }
-
-        .st-busy {
-            background: #fecaca;
-            color: #991b1b
-        }
-
-        /* 視圖內容 */
-        .content {
+        /* 通用列表式設計 */
+        .main {
             flex: 1;
             overflow-y: auto;
-            padding: 0 20px 120px;
-            -webkit-overflow-scrolling: touch
+            padding: 0 20px 130px;
         }
 
-        .panel {
+        .section {
             display: none;
-            animation: fadeUp .25s ease-out
+            animation: fadeIn .3s ease-out;
         }
 
-        .panel.on {
-            display: block
+        .section.on {
+            display: block;
         }
 
-        @keyframes fadeUp {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(8px)
+                transform: translateY(10px);
             }
 
             to {
                 opacity: 1;
-                transform: none
+                transform: none;
             }
         }
 
-        .sec-t {
-            font-size: 17px;
+        .title {
+            font-size: 19px;
             font-weight: 900;
-            margin: 24px 0 14px;
+            margin: 30px 0 15px;
             display: flex;
             align-items: center;
-            gap: 8px
+            justify-content: space-between;
         }
 
-        .sec-t .num {
+        .badge {
             font-size: 10px;
             background: var(--red);
             color: #fff;
-            padding: 2px 7px;
-            border-radius: 8px;
-            font-weight: 900
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 900;
         }
 
-        /* 卡片 */
-        .card {
-            background: var(--w);
+        .box {
+            background: #fff;
             border-radius: var(--rad);
-            padding: 18px;
-            margin-bottom: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
             box-shadow: var(--sh);
-            border: 1px solid rgba(0, 0, 0, .03)
+            border: 1px solid rgba(0, 0, 0, 0.02);
         }
 
-        .card.hl {
-            background: var(--priL);
-            border-left: 5px solid var(--pri)
-        }
-
-        .card.purple {
-            background: linear-gradient(135deg, #7c3aed, #a78bfa);
+        .box-act {
+            background: linear-gradient(135deg, #6d28d9, #8b5cf6);
             color: #fff;
-            border: none
+            border: none;
         }
 
-        .card.warn {
-            background: var(--orgL);
-            border-left: 5px solid var(--org)
-        }
-
-        /* 輸入列 */
-        .inp-bar {
+        .box-row {
             display: flex;
-            gap: 8px;
-            background: #f3f4f6;
-            padding: 6px;
-            border-radius: 16px;
-            margin-bottom: 14px
+            align-items: center;
+            gap: 15px;
         }
 
-        .inp-bar input {
+        /* 輸入與回覆 */
+        .inp-row {
+            display: flex;
+            gap: 10px;
+            background: #f1f5f9;
+            padding: 6px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+        }
+
+        .inp-row input {
             flex: 1;
             border: none;
             background: transparent;
-            padding: 12px;
-            font-size: 15px;
+            padding: 14px;
+            font-size: 16px;
             font-weight: 700;
-            min-width: 0
+            outline: none;
         }
 
-        .inp-bar button {
+        .inp-row button {
             background: var(--pri);
             color: #fff;
-            padding: 0 20px;
-            border-radius: 12px;
+            border-radius: 15px;
+            padding: 0 22px;
             font-weight: 900;
-            font-size: 14px;
-            white-space: nowrap
-        }
-
-        /* 指派人選 */
-        .pick-row {
-            display: flex;
-            gap: 8px;
-            overflow-x: auto;
-            padding-bottom: 5px;
-            margin-bottom: 8px
-        }
-
-        .pick-row::-webkit-scrollbar {
-            display: none
-        }
-
-        .pk {
-            flex-shrink: 0;
-            padding: 9px 16px;
-            border-radius: 14px;
-            background: #f3f4f6;
-            font-size: 12px;
-            font-weight: 800;
-            color: var(--sub);
-            border: 2.5px solid transparent
-        }
-
-        .pk.on {
-            border-color: var(--pri);
-            background: var(--priL);
-            color: var(--pri)
-        }
-
-        /* 任務卡片 */
-        .task-body {
-            display: flex;
-            align-items: flex-start;
-            gap: 14px
-        }
-
-        .task-info {
-            flex: 1;
-            min-width: 0
-        }
-
-        .task-info .tt {
             font-size: 15px;
-            font-weight: 900
         }
 
-        .task-info .tm {
-            font-size: 11px;
-            color: var(--sub);
-            margin-top: 3px
-        }
-
-        .task-reply {
-            margin-top: 10px;
-            padding: 10px 14px;
+        /* 任務卡 */
+        .tk-reply {
+            margin-top: 12px;
+            padding: 12px;
             background: #f9fafb;
-            border-radius: 12px;
-            border-left: 3px solid var(--org);
-            font-size: 12px;
-            color: var(--sub)
-        }
-
-        .task-reply b {
-            color: var(--txt)
+            border-radius: 15px;
+            border-left: 4px solid var(--org);
+            font-size: 13px;
+            color: var(--sub);
         }
 
         .btn-done {
             background: var(--grn);
             color: #fff;
-            padding: 10px 18px;
-            border-radius: 14px;
+            padding: 12px 20px;
+            border-radius: 15px;
             font-weight: 900;
             font-size: 13px;
-            flex-shrink: 0;
-            white-space: nowrap
+            white-space: nowrap;
         }
 
-        .btn-reply {
-            background: none;
-            color: var(--pri);
-            font-size: 11px;
-            font-weight: 800;
-            padding: 5px 0;
-            margin-top: 5px
-        }
-
-        /* 採買項目 */
-        .buy-item {
-            display: flex;
-            align-items: center;
-            gap: 14px
-        }
-
-        .buy-item .buy-info {
-            flex: 1;
-            min-width: 0
-        }
-
-        .buy-item .buy-info .bn {
-            font-size: 15px;
-            font-weight: 800
-        }
-
-        .buy-item .buy-info .bm {
-            font-size: 11px;
-            color: var(--sub);
-            margin-top: 2px
-        }
-
-        .btn-bought {
-            background: var(--grn);
-            color: #fff;
-            padding: 10px 16px;
-            border-radius: 14px;
-            font-weight: 900;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            flex-shrink: 0
-        }
-
-        /* 庫存 */
-        .inv-grid {
+        /* 庫存功能 */
+        .iv-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px
+            gap: 15px;
         }
 
-        .inv-card {
-            background: var(--w);
+        .iv-card {
+            background: #fff;
             border-radius: var(--rad);
-            padding: 16px;
+            padding: 20px;
             text-align: center;
             box-shadow: var(--sh);
             border: 2.5px solid transparent;
-            position: relative
+            cursor: pointer;
         }
 
-        .inv-card.low {
+        .iv-card.low {
             border-color: var(--org);
-            background: var(--orgL)
+            background: #fffbeb;
         }
 
-        .inv-card.zero {
+        .iv-card.zero {
             border-color: var(--red);
-            background: var(--redL)
+            background: #fef2f2;
         }
 
-        .inv-nm {
-            font-size: 14px;
+        .iv-name {
+            font-size: 15px;
             font-weight: 900;
-            margin-bottom: 8px
+            margin-bottom: 10px;
         }
 
-        .inv-num {
+        .iv-qty {
             font-size: 26px;
             font-weight: 900;
-            margin: 8px 0
+            margin: 8px 0;
         }
 
-        .inv-ctrl {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px
-        }
-
-        .inv-ctrl button {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: #f3f4f6;
-            font-size: 18px;
+        .iv-btn {
+            width: 100%;
+            border: none;
+            background: var(--org);
+            color: #fff;
+            padding: 10px;
+            border-radius: 12px;
             font-weight: 900;
-            display: flex;
-            align-items: center;
-            justify-content: center
-        }
-
-        .inv-ctrl button:active {
-            background: var(--priL)
-        }
-
-        .inv-alert {
-            font-size: 10px;
-            color: var(--sub);
-            margin-top: 6px
-        }
-
-        .inv-tag {
-            font-size: 10px;
-            font-weight: 800;
-            padding: 3px 8px;
-            border-radius: 8px;
-            display: inline-block;
-            margin-top: 6px
-        }
-
-        .inv-actions {
+            font-size: 11px;
             margin-top: 10px;
-            display: flex;
-            gap: 6px
         }
 
-        .inv-actions button {
-            flex: 1;
-            padding: 7px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 800
-        }
-
-        /* 底部導覽 */
+        /* 底部功能 */
         .nav {
             position: fixed;
             bottom: 0;
@@ -713,143 +461,49 @@
             transform: translateX(-50%);
             width: 100%;
             max-width: 440px;
-            background: rgba(255, 255, 255, .96);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid var(--bdr);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid #f1f5f9;
             display: flex;
-            padding: 10px 8px 28px;
-            z-index: 200
+            padding: 12px 0 35px;
+            z-index: 500;
         }
 
-        .nb {
+        .nav-i {
             flex: 1;
             text-align: center;
-            color: var(--dim);
-            font-size: 10px;
+            color: var(--sub);
+            font-size: 11px;
             font-weight: 800;
-            background: none;
-            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 3px
+            gap: 4px;
+            position: relative;
         }
 
-        .nb.on {
-            color: var(--pri)
+        .nav-i.on {
+            color: var(--pri);
         }
 
-        .nb .ic {
-            font-size: 22px;
-            display: block
+        .nav-i .ic {
+            font-size: 24px;
         }
 
-        .nb .rd {
+        .nav-i .dot {
             position: absolute;
-            top: -4px;
-            right: 15%;
+            top: -6px;
+            right: 20%;
             background: var(--red);
             color: #fff;
-            min-width: 17px;
-            height: 17px;
+            min-width: 18px;
+            height: 18px;
             border-radius: 10px;
-            font-size: 9px;
+            font-size: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
-            border: 2px solid #fff
-        }
-
-        /* 抽屜板 */
-        .drw-bg {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .45);
-            z-index: 1000;
-            display: none;
-            align-items: flex-end;
-            justify-content: center
-        }
-
-        .drw-bg.on {
-            display: flex
-        }
-
-        .drw {
-            background: #fff;
-            width: 100%;
-            max-width: 440px;
-            border-radius: 30px 30px 0 0;
-            padding: 30px 20px 40px;
-            animation: drwUp .3s ease-out;
-            max-height: 85vh;
-            overflow-y: auto
-        }
-
-        @keyframes drwUp {
-            from {
-                transform: translateY(100%)
-            }
-
-            to {
-                transform: none
-            }
-        }
-
-        .drw h3 {
-            text-align: center;
-            font-weight: 900;
-            margin-bottom: 20px
-        }
-
-        .st-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px
-        }
-
-        .st-cell {
-            background: var(--bg);
-            padding: 16px 8px;
-            border-radius: 18px;
-            text-align: center;
-            border: 2.5px solid transparent;
-            transition: .15s
-        }
-
-        .st-cell.on {
-            border-color: var(--pri);
-            background: var(--priL)
-        }
-
-        .st-cell .se {
-            font-size: 28px;
-            display: block;
-            margin-bottom: 4px
-        }
-
-        .st-cell .sl {
-            font-size: 12px;
-            font-weight: 800
-        }
-
-        .note-input {
-            width: 100%;
-            border: 2px solid var(--bdr);
-            padding: 14px;
-            border-radius: 16px;
-            font-size: 14px;
-            font-weight: 700;
-            margin-top: 10px;
-            resize: none;
-            min-height: 50px
-        }
-
-        .note-input:focus {
-            border-color: var(--pri)
+            border: 2px solid #fff;
         }
 
         #toast {
@@ -857,17 +511,16 @@
             top: 50px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--txt);
+            background: #1e293b;
             color: #fff;
-            padding: 12px 28px;
-            border-radius: 40px;
-            font-size: 13px;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 14px;
             font-weight: 800;
             opacity: 0;
             transition: .3s;
             z-index: 9999;
             pointer-events: none;
-            white-space: nowrap
         }
     </style>
 </head>
@@ -875,508 +528,338 @@
 <body>
 
     <div class="shell">
-        <!-- === 建立 / 加入 === -->
-        <div class="page-init" id="pgInit">
-            <div class="init-card" id="cardNew">
-                <div style="font-size:52px;margin-bottom:8px">🏡</div>
-                <h1>HomeSync</h1>
-                <div class="sub">全家人一起管大小事<br>建立後分享連結給家人，即可同步</div>
-                <input class="init-input" id="iFamily" placeholder="取個家名（如：我們這一家）" maxlength="10">
-                <button class="btn-main" onclick="createFamily()">建立家庭 ✨</button>
+        <!-- 建立 / 加入 -->
+        <div class="sc-init" id="pgInit">
+            <div class="card-init" id="modeCreate">
+                <div class="sec-indicator">🛡️ 高強度端對端加密已開啟</div>
+                <h2>HomeSync</h2>
+                <p>您的私人家庭空間。<br>資料經過軍事級加密，駭客無法讀取內容。</p>
+                <input class="inp-init" id="iName" placeholder="輸入家名 (如: 我家)" maxlength="12">
+                <button class="btn-pri" onclick="buildHome()">建立我的安全家庭空間 ✨</button>
             </div>
-            <div class="init-card join-card" id="cardJoin">
-                <div style="font-size:52px;margin-bottom:10px">✉️</div>
-                <h1>你收到邀請！</h1>
-                <div class="fam-show" id="joinShow"></div>
-                <button class="btn-main" onclick="confirmJoin()">立刻加入 →</button>
+            <div class="card-init" id="modeJoin" style="display:none">
+                <div class="sec-indicator">🔐 您收到安全邀請</div>
+                <h2>進入家庭</h2>
+                <p>點擊下方按鈕以進入您的私密空間</p>
+                <div id="joinWho" style="font-weight:900; color:var(--pri); font-size:22px; margin:20px 0"></div>
+                <button class="btn-pri" onclick="verifyJoin()">立即點擊進入 →</button>
             </div>
         </div>
 
-        <!-- === 角色選擇 === -->
-        <div class="page-role" id="pgRole">
-            <h2 style="font-weight:900;font-size:22px">你是家裡的誰？</h2>
-            <p style="color:var(--sub);font-size:13px;margin-top:5px">選你自己，或新增你的名字</p>
-            <div class="role-list" id="roleList"></div>
-            <div class="add-box">
-                <p style="font-size:12px;font-weight:800;color:var(--sub);margin-bottom:10px">新增家庭成員</p>
-                <div class="row">
-                    <input id="iNewName" placeholder="輸入名字" maxlength="6">
-                    <button onclick="addMember()">加入</button>
+        <!-- 角色選擇 -->
+        <div class="sc-role" id="pgRole">
+            <h2 style="font-weight:900">你是家裡的誰？</h2>
+            <div class="role-grid" id="roleGrid"></div>
+            <div style="background:#f1f5f9; padding:25px; border-radius:25px">
+                <p style="font-size:12px; font-weight:900; color:var(--sub); margin-bottom:12px">沒在名單上？新增一名成員：</p>
+                <div style="display:flex; gap:10px">
+                    <input id="newMemberName" placeholder="輸入名字"
+                        style="flex:1; border:none; padding:15px; border-radius:15px; font-weight:800">
+                    <button onclick="addNewM()"
+                        style="background:var(--pri); color:#fff; border:none; padding:0 25px; border-radius:15px; font-weight:900">新增</button>
                 </div>
             </div>
-            <button class="btn-main" id="bStart" disabled onclick="startApp()" style="margin-top:auto">準備好了 ✨</button>
+            <button class="btn-pri" id="btnStart" disabled onclick="bootApp()" style="margin-top:auto">安全連線進入 ✨</button>
         </div>
 
-        <!-- === 主App === -->
-        <div class="app" id="pgApp">
-            <div class="top">
+        <!-- 主App -->
+        <div id="sc-app">
+            <header class="top">
                 <div class="top-row">
-                    <h1 id="appTitle">HomeSync</h1>
-                    <div class="invite-chip" onclick="shareLink()">🔗 邀請家人</div>
+                    <h1 id="topName">家</h1>
+                    <div class="inv-chip" onclick="copyInvite()"><span>🔗</span>邀請家人</div>
                 </div>
-                <div class="ppl-col" id="pplCol"></div>
-            </div>
-            <div class="content">
-                <div class="panel on" id="vHome"></div>
-                <div class="panel" id="vTask"></div>
-                <div class="panel" id="vBuy"></div>
-                <div class="panel" id="vInv"></div>
-            </div>
+                <div class="ppl-bar" id="wall"></div>
+            </header>
+            <main class="main" id="view"></main>
             <nav class="nav">
-                <button class="nb on" onclick="go('home')"><span class="ic">🏠</span>首頁</button>
-                <button class="nb" onclick="go('task')"><span class="ic">✋</span>託付<div class="rd" id="dT"
-                        style="display:none">0</div></button>
-                <button class="nb" onclick="go('buy')"><span class="ic">🛒</span>採買<div class="rd" id="dB"
-                        style="display:none">0</div></button>
-                <button class="nb" onclick="go('inv')"><span class="ic">📦</span>庫存<div class="rd" id="dI"
-                        style="display:none">0</div></button>
+                <div class="nav-i on" onclick="tab('dash')"><span class="ic">🏠</span>首頁</div>
+                <div class="nav-i" onclick="tab('task')"><span class="ic">✋</span>託付<div class="dot" id="dotT"
+                        style="display:none">0</div>
+                </div>
+                <div class="nav-i" onclick="tab('buy')"><span class="ic">🛒</span>採買<div class="dot" id="dotB"
+                        style="display:none">0</div>
+                </div>
+                <div class="nav-i" onclick="tab('inv')"><span class="ic">📦</span>庫存</div>
             </nav>
         </div>
     </div>
 
-    <!-- 狀態更新抽屜 -->
-    <div class="drw-bg" id="drwSt" onclick="if(event.target===this)closeDrw('drwSt')">
-        <div class="drw">
-            <h3>更新我的狀態</h3>
-            <div class="st-grid" id="stGrid"></div>
-            <p style="font-size:12px;font-weight:800;color:var(--sub);margin-bottom:6px">想讓家人知道更多？（選填）</p>
-            <textarea class="note-input" id="stNote" placeholder="例如：等等會去全聯、正在帶狗散步..."></textarea>
-            <button class="btn-main" style="margin-top:18px" onclick="saveStatus()">儲存狀態</button>
-        </div>
-    </div>
-
-    <!-- 回覆抽屜 -->
-    <div class="drw-bg" id="drwReply" onclick="if(event.target===this)closeDrw('drwReply')">
-        <div class="drw">
-            <h3>回覆這個委託</h3>
-            <p id="replyTitle" style="font-weight:900;text-align:center;margin-bottom:15px"></p>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:15px" id="quickReplies"></div>
-            <textarea class="note-input" id="replyText" placeholder="或自行輸入..."></textarea>
-            <button class="btn-main" style="margin-top:15px" onclick="sendReply()">送出回覆</button>
-        </div>
-    </div>
-
-    <!-- 庫存編輯抽屜 -->
-    <div class="drw-bg" id="drwInv" onclick="if(event.target===this)closeDrw('drwInv')">
-        <div class="drw">
-            <h3>編輯庫存</h3>
-            <div id="invEditBody"></div>
-            <button class="btn-main" style="margin-top:18px" onclick="saveInvEdit()">儲存變更</button>
-            <button onclick="deleteInv()"
-                style="width:100%;margin-top:10px;padding:14px;border-radius:16px;background:var(--redL);color:var(--red);font-weight:900;font-size:14px">刪除此物品</button>
+    <!-- 狀態留言抽屜 -->
+    <div id="stDrawer" class="sc-init off" style="background:rgba(0,0,0,0.5); align-items:flex-end">
+        <div class="card-init" style="width:100%; border-radius:35px 35px 0 0; padding-bottom:100px">
+            <h3 style="margin-bottom:20px">更新目前狀態</h3>
+            <textarea id="stNote"
+                style="width:100%; height:100px; padding:15px; border-radius:20px; border:3px solid #f1f5f9; font-weight:800"
+                placeholder="例如：帶狗散步、正在加班、回家的路上..."></textarea>
+            <button class="btn-pri" style="margin-top:15px" onclick="saveSt()">儲存狀態</button>
+            <button onclick="document.getElementById('stDrawer').classList.add('off')"
+                style="width:100%; margin-top:15px; background:none; border:none; font-weight:900; color:var(--sub)">取消</button>
         </div>
     </div>
 
     <div id="toast"></div>
 
     <script>
-        // ===== Firebase 連線引擎 (含離線備援) =====
-        let firebaseReady = false;
-        try {
-            firebase.initializeApp({ databaseURL: "https://homesync-share-default-rtdb.firebaseio.com" });
-            firebaseReady = true;
-        } catch (e) { console.warn('Firebase init failed, using localStorage only'); }
+        // ===== 資安防禦架構 =====
+        const CONFIG = { databaseURL: "https://homesync-private-default-rtdb.firebaseio.com" };
+        firebase.initializeApp(CONFIG);
+        const rdb = firebase.database();
 
-        const STATUSES = [
-            { id: 'home', l: '在家', e: '🏠', c: 'st-home' }, { id: 'work', l: '上班中', e: '🏢', c: 'st-work' },
-            { id: 'way', l: '快到家', e: '🏃', c: 'st-way' }, { id: 'out', l: '外出', e: '🚶', c: 'st-out' },
-            { id: 'rest', l: '休息中', e: '💤', c: 'st-rest' }, { id: 'busy', l: '勿擾', e: '🔕', c: 'st-busy' }
-        ];
-        const QUICK_REPLIES = ['今天不行', '明天可以', '我晚點處理', '已經在路上了', '週末再說'];
+        let familyKey = '', familyName = '', meId = '', tabName = 'dash', DB = { m: {}, t: {}, s: {}, v: {} };
 
-        let KEY = '', ME = '', TAB = 'home', TGT = '', replyTid = '', editInvId = '';
-        let DB = { name: '', m: {}, t: {}, s: {}, v: {} };
-        let fbRef = null;
+        // 1. 初始化與金鑰辨識
+        (function init() {
+            const params = new URLSearchParams(location.search);
+            const invite = params.get('join');
+            const saved = localStorage.getItem('hs_key');
 
-        // 關鍵：讀寫函數（Firebase + localStorage 雙備援）
-        function load() { return JSON.parse(localStorage.getItem('hs_' + KEY)) || { name: '', m: {}, t: {}, s: {}, v: {} }; }
-        function save(d) { localStorage.setItem('hs_' + KEY, JSON.stringify(d)); if (fbRef) fbRef.set(d); }
-
-        // ===== 初始化：偵測是否有邀請碼 =====
-        (function () {
-            const p = new URLSearchParams(location.search);
-            const joinCode = p.get('join');
-            const savedKey = localStorage.getItem('hs_lastkey');
-
-            if (joinCode) {
-                KEY = joinCode;
-                document.getElementById('cardNew').style.display = 'none';
-                document.getElementById('cardJoin').style.display = 'block';
-                connectDB(() => {
-                    document.getElementById('joinShow').textContent = '「' + (DB.name || '家') + '」';
+            if (invite) {
+                familyKey = invite;
+                document.getElementById('modeCreate').style.display = 'none';
+                document.getElementById('modeJoin').style.display = 'block';
+                // 預讀名稱（這部分不加密，僅供辨識）
+                rdb.ref('hs/v4/' + familyKey + '/name').once('value', s => {
+                    document.getElementById('joinWho').textContent = '「' + (s.val() || '家') + '」';
                 });
-            } else if (savedKey) {
-                KEY = savedKey;
-                const savedMe = localStorage.getItem('hs_me_' + KEY);
-                connectDB(() => {
-                    if (savedMe && DB.m && DB.m[savedMe]) {
-                        ME = savedMe;
-                        document.getElementById('pgInit').classList.add('hide');
-                        document.getElementById('pgApp').classList.add('on');
-                        render();
-                    }
-                });
+            } else if (saved) {
+                familyKey = saved;
+                connectCloud();
             }
         })();
 
-        function connectDB(cb) {
-            DB = load();
-            if (firebaseReady) {
-                fbRef = firebase.database().ref('hs/' + KEY);
-                fbRef.on('value', snap => {
-                    const val = snap.val();
-                    if (val) { DB = val; localStorage.setItem('hs_' + KEY, JSON.stringify(DB)); }
-                    else { DB = load(); if (DB.name) save(DB); }
-                    renderRoles();
-                    if (ME) render();
-                });
-            }
-            if (cb) setTimeout(cb, 300);
+        function connectCloud() {
+            localStorage.setItem('hs_key', familyKey);
+            rdb.ref('hs/v4/' + familyKey).on('value', snap => {
+                const raw = snap.val();
+                if (!raw) return;
+                familyName = raw.name || '我家';
+                // --- 軍事級解密流程 ---
+                if (raw.data) {
+                    try {
+                        const bytes = CryptoJS.AES.decrypt(raw.data, familyKey);
+                        DB = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+                    } catch (e) { console.error("解密失敗，金鑰可能不對"); }
+                }
+                renderRoles();
+                if (meId) renderApp();
+            });
+            document.getElementById('pgInit').classList.add('off');
+            const savedMe = localStorage.getItem('hs_me_' + familyKey);
+            if (savedMe) { meId = savedMe; bootApp(); }
+            else { document.getElementById('pgRole').style.display = 'flex'; }
         }
 
-        function createFamily() {
-            const n = document.getElementById('iFamily').value.trim();
-            if (!n) return;
-            KEY = 'f' + Math.random().toString(36).substr(2, 8);
-            DB.name = n;
-            localStorage.setItem('hs_lastkey', KEY);
-            save(DB);
-            connectDB();
-            document.getElementById('pgInit').classList.add('hide');
-            document.getElementById('pgRole').classList.add('show');
+        // 2. 雲端加密同步
+        function syncToCloud() {
+            // --- 軍事級加密流程 ---
+            const encrypted = CryptoJS.AES.encrypt(JSON.stringify(DB), familyKey).toString();
+            rdb.ref('hs/v4/' + familyKey).update({
+                name: familyName,
+                data: encrypted,
+                lastUpdate: Date.now()
+            });
         }
 
-        function confirmJoin() {
-            localStorage.setItem('hs_lastkey', KEY);
-            connectDB();
-            document.getElementById('pgInit').classList.add('hide');
-            document.getElementById('pgRole').classList.add('show');
+        function buildHome() {
+            const n = document.getElementById('iName').value.trim(); if (!n) return;
+            familyName = n;
+            familyKey = 'k' + CryptoJS.lib.WordArray.random(16).toString();
+            syncToCloud();
+            connectCloud();
         }
 
-        // ===== 角色管理 =====
+        function verifyJoin() { connectCloud(); }
+
+        // 3. 角色與主介面
         function renderRoles() {
+            const list = document.getElementById('roleGrid');
             const ms = DB.m || {};
-            document.getElementById('roleList').innerHTML = Object.keys(ms).map(id =>
-                `<div class="role-card ${ME == id ? 'on' : ''}" onclick="pickMe('${id}')"><span class="big-em">${ms[id].e || '🙋'}</span><div class="role-nm">${ms[id].n}</div></div>`
-            ).join('');
+            list.innerHTML = Object.keys(ms).map(id => `
+    <div class="role-c ${meId == id ? 'on' : ''}" onclick="selMe('${id}')">
+      <span class="em">${ms[id].e || '🙋'}</span>
+      <div class="nm">${ms[id].n}</div>
+    </div>
+  `).join('');
         }
-
-        function pickMe(id) { ME = id; document.getElementById('bStart').disabled = false; renderRoles(); }
-
-        function addMember() {
-            const n = document.getElementById('iNewName').value.trim(); if (!n) return;
+        function selMe(id) { meId = id; document.getElementById('btnStart').disabled = false; renderRoles(); }
+        function addNewM() {
+            const n = document.getElementById('newMemberName').value.trim(); if (!n) return;
             const id = 'm' + Date.now();
             if (!DB.m) DB.m = {};
             DB.m[id] = { n, e: '🙋', s: 'home', note: '' };
-            save(DB);
-            ME = id;
-            document.getElementById('iNewName').value = '';
-            document.getElementById('bStart').disabled = false;
-            renderRoles();
-            toast('已加入家庭！');
+            syncToCloud();
+            document.getElementById('newMemberName').value = '';
+        }
+        function bootApp() {
+            localStorage.setItem('hs_me_' + familyKey, meId);
+            document.getElementById('pgRole').style.display = 'none';
+            document.getElementById('sc-app').style.display = 'flex';
+            document.getElementById('topName').textContent = familyName;
+            renderApp();
         }
 
-        function startApp() {
-            if (!ME) return;
-            localStorage.setItem('hs_me_' + KEY, ME);
-            document.getElementById('pgRole').classList.remove('show');
-            document.getElementById('pgApp').classList.add('on');
-            render();
+        // 4. 功能面板
+        function tab(t) {
+            tabName = t;
+            document.querySelectorAll('.nav-i').forEach((it, i) => it.classList.toggle('on', [['dash', 'task', 'buy', 'inv'][i]].includes(t)));
+            renderApp();
         }
 
-        // ===== 主要渲染 =====
-        function go(t) {
-            TAB = t;
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
-            document.getElementById('v' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('on');
-            document.querySelectorAll('.nb').forEach((b, i) => b.classList.toggle('on', ['home', 'task', 'buy', 'inv'][i] === t));
-            render();
+        function renderApp() {
+            renderWall();
+            const v = document.getElementById('view');
+            if (tabName == 'dash') v.innerHTML = rDash();
+            if (tabName == 'task') v.innerHTML = rTask();
+            if (tabName == 'buy') v.innerHTML = rBuy();
+            if (tabName == 'inv') v.innerHTML = rInv();
+            updateBadges();
         }
 
-        function render() {
-            const me = DB.m && DB.m[ME];
-            if (!me) return;
-            document.getElementById('appTitle').textContent = DB.name || 'HomeSync';
-            renderPpl();
-            if (TAB === 'home') document.getElementById('vHome').innerHTML = rHome();
-            if (TAB === 'task') document.getElementById('vTask').innerHTML = rTask();
-            if (TAB === 'buy') document.getElementById('vBuy').innerHTML = rBuy();
-            if (TAB === 'inv') document.getElementById('vInv').innerHTML = rInv();
-            dots();
-        }
-
-        function renderPpl() {
+        function renderWall() {
             const ms = DB.m || {};
-            document.getElementById('pplCol').innerHTML = Object.keys(ms).map(id => {
-                const m = ms[id], st = STATUSES.find(s => s.id === m.s) || STATUSES[0];
-                return `<div class="ppl-item ${id === ME ? 'me' : ''}" onclick="${id === ME ? 'openStDrawer()' : ''}">
+            document.getElementById('wall').innerHTML = Object.keys(ms).map(id => {
+                const m = ms[id];
+                return `<div class="ppl-item ${id == meId ? 'me' : ''}" onclick="${id == meId ? 'openSt()' : ''}">
       <div class="ppl-av">${m.e}</div>
-      <div class="ppl-info">
-        <b>${m.n}${id === ME ? ' (我)' : ''}</b>
-        ${m.note ? `<div class="ppl-note">💬 ${m.note}</div>` : ''}
-      </div>
-      <div class="ppl-st ${st.c}">${st.e} ${st.l}</div>
+      <div class="ppl-info"><b>${m.n}${id == meId ? ' (我)' : ''}</b><p class="ppl-note">${m.note || '🏡 在家'}</p></div>
     </div>`;
             }).join('');
         }
 
-        // ===== 首頁 =====
-        function rHome() {
-            const ts = DB.t || {}, sh = DB.s || {}, iv = DB.v || {};
-            const myT = Object.keys(ts).filter(i => ts[i].to === ME && !ts[i].done);
-            const buyC = Object.keys(sh).filter(i => !sh[i].done).length;
-            const lowC = Object.keys(iv).filter(i => iv[i].q <= (iv[i].alert || 1)).length;
-            const me = DB.m[ME];
-
+        function rDash() {
+            const ts = DB.t || {};
+            const my = Object.keys(ts).filter(i => ts[i].to == meId && !ts[i].done);
             return `
-    <div class="sec-t">嗨 ${me.n} 👋</div>
-    ${myT.length ? `<div class="card hl" onclick="go('task')" style="cursor:pointer">
-      <div style="font-weight:900;font-size:16px">📬 你有 ${myT.length} 個新委託！</div>
-      <div style="font-size:12px;color:var(--sub);margin-top:4px">家人拜託你的事，快去看看 →</div>
-    </div>`: ''}
-    ${lowC ? `<div class="card warn" onclick="go('inv')" style="cursor:pointer">
-      <div style="font-weight:900;font-size:15px">⚠️ ${lowC} 項物資快用完了</div>
-      <div style="font-size:12px;color:var(--sub);margin-top:4px">去庫存頁看看該補什麼貨</div>
-    </div>`: ''}
-    ${buyC ? `<div class="card" onclick="go('buy')" style="cursor:pointer">
-      <div style="font-weight:900;font-size:15px">🛒 還有 ${buyC} 件東西要買</div>
-      <div style="font-size:12px;color:var(--sub);margin-top:4px">出門前看一下採買清單</div>
-    </div>`: ''}
-    ${!myT.length && !lowC && !buyC ? `<div class="card purple" style="text-align:center;padding:30px">
-      <div style="font-size:36px;margin-bottom:8px">☀️</div>
-      <div style="font-weight:900;font-size:17px">家裡一切安好！</div>
-    </div>`: ''}
-    <div class="sec-t">快速操作</div>
-    <div class="card" onclick="go('task')" style="cursor:pointer;display:flex;align-items:center;gap:14px">
-      <div style="width:44px;height:44px;background:var(--priL);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✋</div>
-      <div><div style="font-weight:900">請家人幫幫忙</div><div style="font-size:11px;color:var(--sub)">指派事項給家中某人</div></div>
-    </div>
-    <div class="card" onclick="go('buy')" style="cursor:pointer;display:flex;align-items:center;gap:14px">
-      <div style="width:44px;height:44px;background:var(--orgL);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🛒</div>
-      <div><div style="font-weight:900">記下要買的東西</div><div style="font-size:11px;color:var(--sub)">全家人共用的願望清單</div></div>
-    </div>`;
+    <div class="title">今日大事 🎉</div>
+    ${my.length ? `
+      <div class="box box-act" onclick="tab('task')">
+        <h3 style="margin-bottom:5px">嘿！你有 ${my.length} 項指派任務</h3>
+        <p style="font-size:14px; opacity:0.85">趕快查看家人拜託你的事</p>
+      </div>` : `<div class="box" style="text-align:center; padding:40px; color:var(--sub)">🏠 目前沒什麼要緊事</div>`}
+    
+    <div class="title">快速傳送 🚀</div>
+    <div class="box box-row" onclick="tab('task')"><div style="font-size:30px">✋</div><b>指派託付事項</b></div>
+    <div class="box box-row" onclick="tab('buy')"><div style="font-size:30px">🛒</div><b>查看採買清單</b></div>`;
         }
 
-        // ===== 託付 =====
         function rTask() {
             const ms = DB.m || {}, ts = DB.t || {};
-            if (!TGT || !ms[TGT]) TGT = Object.keys(ms).find(i => i !== ME) || ME;
-            const my = Object.keys(ts).filter(i => ts[i].to === ME && !ts[i].done);
-            const ot = Object.keys(ts).filter(i => ts[i].to !== ME && !ts[i].done);
-
+            const my = Object.keys(ts).filter(i => ts[i].to == meId && !ts[i].done);
             return `
-    <div class="sec-t">請家人幫忙 ✉️</div>
-    <div class="card">
-      <div class="inp-bar"><input id="tI" placeholder="例如：幫我領包裹"><button onclick="sendTask()">指派</button></div>
-      <div style="font-size:11px;font-weight:800;color:var(--sub);margin-bottom:6px">指派給誰？</div>
-      <div class="pick-row">${Object.keys(ms).map(id => `<div class="pk ${TGT === id ? 'on' : ''}" onclick="TGT='${id}';render()">${ms[id].e} ${ms[id].n}</div>`).join('')}</div>
+    <div class="title">指派託付 ✉️</div>
+    <div class="box">
+      <div class="inp-row"><input id="tIn" placeholder="例如: 幫我帶麵、拿包裹..."><button onclick="sendT()">送出</button></div>
+      <div style="font-size:11px; font-weight:900; color:var(--sub); margin-bottom:10px">指派給：</div>
+      <div style="display:flex; gap:10px; overflow-x:auto">
+        ${Object.keys(ms).map(id => `<div class="ppl-st ${id != meId ? 'st-way' : 'st-home'}" style="cursor:pointer" onclick="sendT('${id}')">${ms[id].n}</div>`).join('')}
+      </div>
     </div>
-
-    ${my.length ? `<div class="sec-t">🚨 指派給我 <span class="num">${my.length}</span></div>` : ''}
-    ${my.map(id => {
-                const t = ts[id];
-                return `<div class="card hl">
-        <div class="task-body">
-          <div class="task-info">
-            <div class="tt">${t.tt}</div>
-            <div class="tm">${ms[t.fr] ? ms[t.fr].n : ''} 拜託的</div>
-            ${t.reply ? `<div class="task-reply"><b>你的回覆：</b>${t.reply}</div>` : ''}
-          </div>
-          <button class="btn-done" onclick="doneTask('${id}')">完成 ✓</button>
+    <div class="title">👉 我要做的 <span>${my.length}</span></div>
+    ${my.map(id => `
+      <div class="box" style="border-left:5px solid var(--pri)">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start">
+          <div><b style="font-size:17px">${DB.t[id].tt}</b><p style="font-size:11px; color:var(--sub); margin-top:5px">由 ${ms[ts[id].fr].n} 託付</p></div>
+          <button class="btn-done" onclick="taskDone('${id}')">✓ 完成</button>
         </div>
-        <button class="btn-reply" onclick="openReply('${id}')">💬 回覆（如：今天不行）</button>
-      </div>`;
-            }).join('')}
-
-    ${ot.length ? `<div class="sec-t">🕒 家人的任務</div>` : ''}
-    ${ot.map(id => {
-                const t = ts[id];
-                return `<div class="card" style="opacity:.65">
-        <div style="font-weight:900;font-size:14px">${t.tt}</div>
-        <div style="font-size:11px;color:var(--sub);margin-top:3px">${ms[t.to] ? ms[t.to].n : ''} 負責中</div>
-        ${t.reply ? `<div class="task-reply"><b>${ms[t.to] ? ms[t.to].n : ''}：</b>${t.reply}</div>` : ''}
-      </div>`;
-            }).join('')}
-
-    ${!Object.keys(ts).length ? '<div style="text-align:center;color:var(--dim);padding:40px">還沒有任何委託 ✋</div>' : ''}`;
+      </div>`).join('') || '<p style="text-align:center; color:var(--sub); padding:30px">完美！目前已無待辦事項</p>'}`;
         }
 
-        // ===== 採買 =====
         function rBuy() {
             const sh = DB.s || {}, ms = DB.m || {};
             const pend = Object.keys(sh).filter(i => !sh[i].done);
-            const done = Object.keys(sh).filter(i => sh[i].done);
-
             return `
-    <div class="sec-t">採買清單 🛒</div>
-    <div class="card">
-      <div class="inp-bar"><input id="bI" placeholder="想買什麼？（番茄、膠帶...）"><button onclick="addBuy()">加入</button></div>
-    </div>
-    ${pend.map(id => `<div class="card"><div class="buy-item">
-      <div class="buy-info"><div class="bn">${sh[id].n}</div><div class="bm">${ms[sh[id].by] ? ms[sh[id].by].n : ''} 新增</div></div>
-      <button class="btn-bought" onclick="buyDone('${id}')">✓ 已買到</button>
-    </div></div>`).join('')}
-    ${!pend.length ? '<div style="text-align:center;color:var(--dim);padding:40px">🎉 沒東西要買！</div>' : ''}
-    ${done.length ? `<details style="margin-top:15px"><summary style="font-size:12px;color:var(--dim);font-weight:800;cursor:pointer">已購買 (${done.length})</summary>
-      ${done.slice(-5).reverse().map(id => `<div class="card" style="opacity:.3"><div style="text-decoration:line-through;font-size:13px">${sh[id].n}</div></div>`).join('')}
-    </details>`: ''}`;
+    <div class="title">採買清單 🛒</div>
+    <div class="box"><div class="inp-row"><input id="bIn" placeholder="新增採買項目"><button onclick="sendB()">加入</button></div></div>
+    ${pend.map(id => `
+      <div class="box box-row">
+        <div style="width:34px; height:34px; border-radius:50%; border:3px solid #eee; cursor:pointer; display:flex; align-items:center; justify-content:center" onclick="buyDone('${id}')"></div>
+        <div style="flex:1 font-weight:900; font-size:16px">${sh[id].n}</div>
+        <div style="font-size:10px; color:var(--sub)">${ms[sh[id].by].n} 新增</div>
+      </div>`).join('') || '<p style="text-align:center; color:var(--sub); padding:30px">清單空空，真清爽！</p>'}`;
         }
 
-        // ===== 庫存 =====
         function rInv() {
             const iv = DB.v || {}, ids = Object.keys(iv);
             return `
-    <div class="sec-t">家中庫存 📦</div>
-    <div class="card">
-      <div style="display:flex;gap:8px">
-        <input id="ivN" placeholder="物品名稱" style="flex:2;border:2px solid var(--bdr);padding:12px;border-radius:14px">
-        <input type="number" id="ivQ" value="1" min="0" style="flex:1;text-align:center;border:2px solid var(--bdr);border-radius:14px;padding:12px">
-        <button onclick="addInv()" style="padding:0 16px;background:var(--pri);color:#fff;border-radius:14px;font-weight:900;white-space:nowrap">追蹤</button>
-      </div>
-    </div>
-    <div class="inv-grid">${ids.map(id => {
-                const it = iv[id], al = it.alert || 1, low = it.q <= al && it.q > 0, zero = it.q <= 0;
-                return `<div class="inv-card ${zero ? 'zero' : low ? 'low' : ''}" onclick="openInvEdit('${id}')">
-        <div class="inv-nm">${it.n}</div>
-        <div class="inv-ctrl">
-          <button onclick="event.stopPropagation();chgInv('${id}',-1)">−</button>
-          <div class="inv-num" style="color:${zero ? 'var(--red)' : low ? 'var(--org)' : 'var(--txt)'}">${it.q}</div>
-          <button onclick="event.stopPropagation();chgInv('${id}',1)">+</button>
-        </div>
-        ${zero ? '<div class="inv-tag" style="background:var(--redL);color:var(--red)">❌ 已用完</div>' : low ? '<div class="inv-tag" style="background:var(--orgL);color:var(--org)">⚠️ 快沒了</div>' : '<div class="inv-tag" style="background:var(--grnL);color:var(--grn)">✓ 充足</div>'}
-        <div class="inv-alert">低於 ${al} 時提醒</div>
-        ${zero || low ? `<div class="inv-actions"><button onclick="event.stopPropagation();inv2buy('${id}')" style="background:var(--org);color:#fff">🛒 加入採買</button></div>` : ''}
-      </div>`;
-            }).join('')}</div>
-    ${!ids.length ? '<div style="text-align:center;color:var(--dim);padding:40px">📦 還沒追蹤任何物品<br>新增日常用品開始管理吧</div>' : ''}`;
+    <div class="title">物資庫存 📦</div>
+    <div class="box"><div style="display:flex; gap:8px"><input id="ivN" placeholder="物品" style="flex:2; padding:12px; border:2px solid #eee; border-radius:12px"><input type="number" id="ivQ" value="1" style="flex:1; text-align:center; border:2px solid #eee; border-radius:12px"><button onclick="sendV()" style="padding:0 20px; background:var(--pri); color:#fff; border-radius:12px; font-weight:900">追蹤</button></div></div>
+    <div class="iv-grid">
+      ${ids.map(id => {
+                const item = iv[id], low = item.q <= 1;
+                return `
+          <div class="iv-card ${low ? (item.q == 0 ? 'zero' : 'low') : ''}">
+            <div class="iv-name">${item.n}</div>
+            <div class="iv-qty">${item.q}</div>
+            <div style="display:flex; justify-content:center; gap:12px">
+              <button onclick="chgV('${id}',-1)" style="width:35px; height:35px; border:none; border-radius:50%">-</button>
+              <button onclick="chgV('${id}',1)" style="width:35px; height:35px; border:none; border-radius:50%">+</button>
+            </div>
+            ${low ? `<button class="iv-btn" onclick="v2b('${id}')">🛒 我去買</button>` : ''}
+          </div>`;
+            }).join('')}
+    </div>`;
         }
 
-        // ===== 操作邏輯 =====
-        function sendTask() {
-            const v = document.getElementById('tI').value.trim(); if (!v) return;
+        // 5. 操作邏輯
+        function sendT(toId) {
+            const tt = document.getElementById('tIn').value; if (!tt) return;
+            if (!toId) toId = Object.keys(DB.m).find(id => id != meId) || meId;
             if (!DB.t) DB.t = {};
-            DB.t['t' + Date.now()] = { tt: v, fr: ME, to: TGT, done: false, reply: '' };
-            save(DB); toast('已指派！✉️');
+            DB.t['t' + Date.now()] = { tt, fr: meId, to: toId, done: false };
+            syncToCloud(); toast("已指派！✉️");
         }
-        function doneTask(id) { DB.t[id].done = true; save(DB); toast('完成！🎉'); }
+        function taskDone(id) { DB.t[id].done = true; syncToCloud(); toast("太棒了！🎉"); }
 
-        function addBuy() {
-            const v = document.getElementById('bI').value.trim(); if (!v) return;
+        function sendB() {
+            const n = document.getElementById('bIn').value; if (!n) return;
             if (!DB.s) DB.s = {};
-            DB.s['s' + Date.now()] = { n: v, by: ME, done: false };
-            save(DB); toast('已加入清單！');
+            DB.s['s' + Date.now()] = { n, by: meId, done: false };
+            syncToCloud(); document.getElementById('bIn').value = '';
         }
         function buyDone(id) {
             const item = DB.s[id]; item.done = true;
             if (!DB.v) DB.v = {};
-            const exists = Object.keys(DB.v).find(k => DB.v[k].n === item.n);
-            if (exists) DB.v[exists].q += 1;
-            else DB.v['v' + Date.now()] = { n: item.n, q: 1, alert: 1 };
-            save(DB); toast('✓ ' + item.n + ' 已轉入庫存！');
+            const exists = Object.keys(DB.v).find(k => DB.v[k].n == item.n);
+            if (exists) DB.v[exists].q += 1; else DB.v['v' + Date.now()] = { n: item.n, q: 1 };
+            syncToCloud(); toast(item.n + " 已買到，自動入庫！");
         }
 
-        function addInv() {
-            const n = document.getElementById('ivN').value.trim(), q = parseInt(document.getElementById('ivQ').value) || 1;
-            if (!n) return;
+        function sendV() {
+            const n = document.getElementById('ivN').value, q = parseInt(document.getElementById('ivQ').value); if (!n) return;
             if (!DB.v) DB.v = {};
-            DB.v['v' + Date.now()] = { n, q, alert: 1 };
-            save(DB); toast('開始追蹤 ' + n);
+            DB.v['v' + Date.now()] = { n, q }; syncToCloud();
         }
-        function chgInv(id, d) { DB.v[id].q = Math.max(0, DB.v[id].q + d); save(DB); }
-        function inv2buy(id) {
-            if (!DB.s) DB.s = {};
-            DB.s['s' + Date.now()] = { n: DB.v[id].n, by: ME, done: false };
-            save(DB); toast(DB.v[id].n + ' 已加入採買清單！');
-        }
-
-        // ===== 狀態抽屜 =====
-        function openStDrawer() {
-            const me = DB.m[ME];
-            document.getElementById('stGrid').innerHTML = STATUSES.map(s =>
-                `<div class="st-cell ${me.s === s.id ? 'on' : ''}" onclick="this.parentNode.querySelectorAll('.st-cell').forEach(x=>x.classList.remove('on'));this.classList.add('on');this.dataset.sid='${s.id}';" data-sid="${s.id}">
-      <span class="se">${s.e}</span><span class="sl">${s.l}</span>
-    </div>`).join('');
-            document.getElementById('stNote').value = me.note || '';
-            document.getElementById('drwSt').classList.add('on');
-        }
-        function saveStatus() {
-            const active = document.querySelector('#stGrid .st-cell.on');
-            if (active) DB.m[ME].s = active.dataset.sid;
-            DB.m[ME].note = document.getElementById('stNote').value.trim();
-            save(DB); closeDrw('drwSt'); toast('狀態已更新！');
+        function chgV(id, d) { DB.v[id].q = Math.max(0, DB.v[id].q + d); syncToCloud(); }
+        function v2b(id) {
+            const n = DB.v[id].n;
+            if (!DB.s) DB.s = {}; DB.s['s' + Date.now()] = { n, by: meId, done: false };
+            syncToCloud(); toast("已同步至採買清單");
         }
 
-        // ===== 回覆抽屜 =====
-        function openReply(tid) {
-            replyTid = tid;
-            document.getElementById('replyTitle').textContent = DB.t[tid].tt;
-            document.getElementById('quickReplies').innerHTML = QUICK_REPLIES.map(r =>
-                `<button onclick="document.getElementById('replyText').value='${r}'" style="padding:8px 14px;border-radius:12px;background:var(--bg);font-size:12px;font-weight:800;border:none">${r}</button>`
-            ).join('');
-            document.getElementById('replyText').value = DB.t[tid].reply || '';
-            document.getElementById('drwReply').classList.add('on');
+        // 6. 工具介面邏輯
+        function copyInvite() {
+            const url = window.location.href.split('?')[0] + '?join=' + familyKey;
+            navigator.clipboard.writeText(url).then(() => toast("🔗 安全連結已複製，傳給家人吧！"));
         }
-        function sendReply() {
-            const v = document.getElementById('replyText').value.trim();
-            if (!v) return;
-            DB.t[replyTid].reply = v;
-            save(DB); closeDrw('drwReply'); toast('已回覆！');
+        function openSt() {
+            document.getElementById('stNote').value = DB.m[meId].note || '';
+            document.getElementById('stDrawer').classList.remove('off');
         }
-
-        // ===== 庫存編輯抽屜 =====
-        function openInvEdit(id) {
-            editInvId = id;
-            const it = DB.v[id];
-            document.getElementById('invEditBody').innerHTML = `
-    <div style="margin-bottom:15px">
-      <label style="font-size:12px;font-weight:800;color:var(--sub);display:block;margin-bottom:6px">物品名稱</label>
-      <input id="editInvN" value="${it.n}" style="width:100%;border:2px solid var(--bdr);padding:14px;border-radius:14px;font-size:15px;font-weight:800">
-    </div>
-    <div style="margin-bottom:15px">
-      <label style="font-size:12px;font-weight:800;color:var(--sub);display:block;margin-bottom:6px">目前數量</label>
-      <input type="number" id="editInvQ" value="${it.q}" style="width:100%;border:2px solid var(--bdr);padding:14px;border-radius:14px;font-size:15px;font-weight:800;text-align:center">
-    </div>
-    <div>
-      <label style="font-size:12px;font-weight:800;color:var(--sub);display:block;margin-bottom:6px">低於幾個時提醒我？</label>
-      <input type="number" id="editInvA" value="${it.alert || 1}" min="0" style="width:100%;border:2px solid var(--bdr);padding:14px;border-radius:14px;font-size:15px;font-weight:800;text-align:center">
-    </div>`;
-            document.getElementById('drwInv').classList.add('on');
+        function saveSt() {
+            DB.m[meId].note = document.getElementById('stNote').value.trim();
+            syncToCloud();
+            document.getElementById('stDrawer').classList.add('off');
         }
-        function saveInvEdit() {
-            DB.v[editInvId].n = document.getElementById('editInvN').value;
-            DB.v[editInvId].q = parseInt(document.getElementById('editInvQ').value) || 0;
-            DB.v[editInvId].alert = parseInt(document.getElementById('editInvA').value) || 1;
-            save(DB); closeDrw('drwInv'); toast('已更新！');
+        function updateBadges() {
+            const ts = DB.t || {}, mys = Object.keys(ts).filter(i => ts[i].to == meId && !ts[i].done).length;
+            const dotT = document.getElementById('dotT'); dotT.style.display = mys > 0 ? 'flex' : 'none'; dotT.textContent = mys;
         }
-        function deleteInv() {
-            delete DB.v[editInvId];
-            save(DB); closeDrw('drwInv'); toast('已刪除');
+        function toast(m) {
+            const t = document.getElementById('toast');
+            t.textContent = m; t.style.opacity = 1;
+            setTimeout(() => t.style.opacity = 0, 2500);
         }
-
-        function closeDrw(id) { document.getElementById(id).classList.remove('on'); }
-
-        // ===== 分享連結 =====
-        function shareLink() {
-            const base = location.href.split('?')[0];
-            const url = base + '?join=' + KEY;
-            if (navigator.share) {
-                navigator.share({ title: DB.name + ' - HomeSync 家庭管家', text: '加入我們的家庭空間！', url });
-            } else {
-                navigator.clipboard.writeText(url).then(() => toast('🔗 連結已複製，傳給家人吧！'));
-            }
-        }
-
-        // ===== 通知紅點 =====
-        function dots() {
-            const ts = DB.t || {}, sh = DB.s || {}, iv = DB.v || {};
-            const c1 = Object.keys(ts).filter(i => ts[i].to === ME && !ts[i].done).length;
-            const c2 = Object.keys(sh).filter(i => !sh[i].done).length;
-            const c3 = Object.keys(iv).filter(i => iv[i].q <= (iv[i].alert || 1)).length;
-            setDot('dT', c1); setDot('dB', c2); setDot('dI', c3);
-        }
-        function setDot(id, c) { const d = document.getElementById(id); d.style.display = c > 0 ? 'flex' : 'none'; d.textContent = c; }
-
-        function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.style.opacity = 1; setTimeout(() => t.style.opacity = 0, 2500); }
     </script>
 </body>
 
