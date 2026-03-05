@@ -4,10 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HomeSync 家庭管家</title>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+TC:wght@400;700;900&display=swap"
-        rel="stylesheet">
+    <title>HomeSync 家庭管家 | 終極修復版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -15,15 +13,15 @@
     <style>
         :root {
             --pri: #7c3aed;
-            --pri-light: #f5f3ff;
+            --priL: #f5f3ff;
             --bg: #f8fafc;
-            --w: #ffffff;
+            --w: #fff;
             --txt: #0f172a;
             --sub: #64748b;
             --grn: #10b981;
             --red: #ef4444;
-            --rad: 24px;
-            --sh: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            --rad: 25px;
+            --sh: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -34,16 +32,15 @@
         }
 
         body {
-            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
-            background: #f1f5f9;
+            font-family: 'Noto Sans TC', sans-serif;
+            background: #eaeef3;
             color: var(--txt);
             display: flex;
             justify-content: center;
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
-        /* 容器固定寬度，防止跑版 */
+        /* 核心容器：解決拉伸與跑版 */
         .shell {
             width: 100%;
             max-width: 440px;
@@ -51,334 +48,224 @@
             display: flex;
             flex-direction: column;
             position: relative;
-            min-height: 100vh;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+            overflow-x: hidden;
         }
 
-        /* --- 引導系統 --- */
-        .full-overlay {
+        /* 步驟牆 */
+        .overlay {
             position: fixed;
             inset: 0;
             z-index: 9999;
-            background: var(--w);
+            background: #fff;
             display: flex;
             flex-direction: column;
-            padding: 40px 25px;
+            padding: 50px 25px;
             transition: 0.3s;
+            max-width: 440px;
+            margin: 0 auto;
         }
 
-        .full-overlay.hide {
+        .overlay.hide {
             opacity: 0;
             pointer-events: none;
             transform: translateY(20px);
         }
 
-        .step-card {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .step-card h1 {
+        .overlay h1 {
             font-size: 32px;
             font-weight: 900;
             color: var(--pri);
-            margin-bottom: 10px;
-        }
-
-        .step-card p {
-            color: var(--sub);
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        .inp-big {
-            width: 100%;
-            border: 3px solid #e2e8f0;
-            background: #fff;
-            padding: 20px;
-            border-radius: 20px;
-            font-size: 18px;
-            font-weight: 800;
             text-align: center;
-            margin-bottom: 20px;
-            outline: none;
-            transition: 0.2s;
-        }
-
-        .inp-big:focus {
-            border-color: var(--pri);
-            box-shadow: 0 0 0 4px var(--pri-light);
-        }
-
-        .btn-big {
-            width: 100%;
-            padding: 20px;
-            border-radius: 50px;
-            background: var(--pri);
-            color: #fff;
-            font-size: 18px;
-            font-weight: 800;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);
-        }
-
-        /* --- 角色選擇 --- */
-        .role-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            width: 100%;
-            margin: 20px 0;
-            max-height: 40vh;
-            overflow-y: auto;
-            padding: 5px;
-        }
-
-        .role-item {
-            background: #fff;
-            border: 3px solid #f1f5f9;
-            border-radius: 22px;
-            padding: 25px 10px;
-            text-align: center;
-            transition: 0.2s;
-            cursor: pointer;
-        }
-
-        .role-item.on {
-            border-color: var(--pri);
-            background: var(--pri-light);
-        }
-
-        .role-item .avatar {
-            font-size: 44px;
-            display: block;
             margin-bottom: 5px;
         }
 
-        .role-item b {
-            font-size: 16px;
-            font-weight: 800;
-        }
-
-        /* --- 主介面 --- */
-        .app-header {
-            padding: 30px 20px 15px;
-            background: #fff;
-            border-bottom: 1px solid #f1f5f9;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .header-row h2 {
-            font-size: 24px;
-            font-weight: 800;
-            color: var(--pri);
-        }
-
-        .invite-badge {
-            background: #fef3c7;
-            color: #92400e;
-            padding: 10px 16px;
-            border-radius: 14px;
-            font-size: 12px;
-            font-weight: 800;
-            cursor: pointer;
-        }
-
-        /* 成員快速狀態 */
-        .member-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .member-card {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 15px;
-            background: #f8fafc;
-            border-radius: 20px;
-            border: 2px solid transparent;
-            transition: 0.2s;
-        }
-
-        .member-card.me {
-            border-color: var(--pri-light);
-            background: var(--pri-light);
-        }
-
-        .av-circle {
-            width: 48px;
-            height: 48px;
-            background: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            box-shadow: var(--sh);
-        }
-
-        .info-box {
-            flex: 1;
-        }
-
-        .info-box b {
-            font-size: 16px;
-            font-weight: 800;
-            display: block;
-        }
-
-        .info-box p {
-            font-size: 12px;
+        .overlay p {
             color: var(--sub);
-            margin-top: 2px;
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 30px;
         }
 
-        /* 頁面內容 */
-        .main-content {
+        /* 角色列表渲染區 */
+        .role-area {
             flex: 1;
             overflow-y: auto;
-            padding: 0 20px 140px;
+            margin: 20px 0;
+            padding: 5px;
         }
 
-        .panel {
-            display: none;
-            animation: slideUp 0.3s ease-out;
-        }
-
-        .panel.active {
-            display: block;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(15px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .title-bar {
-            font-size: 18px;
-            font-weight: 800;
-            margin: 30px 0 15px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .card {
-            background: #fff;
-            border-radius: var(--rad);
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: var(--sh);
-        }
-
-        /* --- 解決庫存跑版 --- */
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .input-group input {
-            flex: 1;
-            border: 2px solid #f1f5f9;
-            padding: 15px;
-            border-radius: 16px;
-            font-weight: 700;
-            outline: none;
-            transition: 0.2s;
-            min-width: 0;
-        }
-
-        .input-group input:focus {
-            border-color: var(--pri);
-        }
-
-        .input-group button {
-            background: var(--pri);
-            color: #fff;
-            border: none;
-            padding: 0 20px;
-            border-radius: 16px;
-            font-weight: 800;
-            white-space: nowrap;
-        }
-
-        .grid-2 {
+        .role-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
         }
 
-        .inv-card {
-            background: #fff;
-            border-radius: var(--rad);
-            padding: 20px;
+        .role-it {
+            background: #f8fafc;
+            border: 3px solid #f1f5f9;
+            border-radius: 25px;
+            padding: 25px 10px;
             text-align: center;
-            box-shadow: var(--sh);
-            position: relative;
-            border: 3px solid transparent;
+            cursor: pointer;
+            transition: 0.2s;
         }
 
-        .inv-card.low {
-            border-color: #fbbf24;
-            background: #fffbeb;
+        .role-it.on {
+            border-color: var(--pri);
+            background: var(--priL);
         }
 
-        .inv-card b {
+        .role-it .em {
+            font-size: 48px;
             display: block;
-            margin-bottom: 10px;
-            font-size: 15px;
+            margin-bottom: 8px;
         }
 
-        .inv-count {
-            font-size: 28px;
-            font-weight: 900;
-            margin-bottom: 15px;
-        }
-
-        .inv-actions {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .inv-actions button {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: none;
-            background: #f1f5f9;
-            font-size: 20px;
+        .role-it b {
+            font-size: 16px;
             font-weight: 800;
+            display: block;
+        }
+
+        /* 新增成員區域：強制不跑版 */
+        .add-box {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .add-box label {
+            font-size: 11px;
+            font-weight: 900;
+            color: var(--sub);
+            display: block;
+            margin-bottom: 8px;
+            margin-left: 5px;
+        }
+
+        .inp-grp {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .inp-grp input {
+            flex: 1;
+            border: none;
+            padding: 15px;
+            border-radius: 18px;
+            font-size: 15px;
+            font-weight: 700;
+            outline: none;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+            min-width: 0;
+        }
+
+        .inp-grp button {
+            background: var(--pri);
+            color: #fff;
+            border: none;
+            border-radius: 18px;
+            padding: 0 25px;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        /* 主按鈕 */
+        .btn-go {
+            width: 100%;
+            padding: 20px;
+            border: none;
+            background: var(--pri);
+            color: #fff;
+            border-radius: 100px;
+            font-size: 18px;
+            font-weight: 900;
+            box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);
+            opacity: 0.5;
+            cursor: not-allowed;
+            transition: 0.3s;
+        }
+
+        .btn-go.ready {
+            opacity: 1;
+            cursor: pointer;
+            transform: scale(1.02);
+        }
+
+        /* 主介面 */
+        #app {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .top {
+            padding: 30px 20px 15px;
+            background: #fff;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .top h2 {
+            font-weight: 900;
+            color: var(--pri);
+        }
+
+        .share-btn {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 10px 16px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 900;
             cursor: pointer;
         }
 
-        /* 導覽列 */
-        .navbar {
+        .wall {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .ppl {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px 15px;
+            background: #f8fafc;
+            border-radius: 20px;
+        }
+
+        .ppl.me {
+            background: var(--priL);
+        }
+
+        .av {
+            width: 44px;
+            height: 44px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: var(--sh);
+        }
+
+        /* 底部導航 */
+        .nav {
             position: fixed;
             bottom: 0;
             left: 50%;
@@ -389,46 +276,28 @@
             backdrop-filter: blur(15px);
             border-top: 1px solid #f1f5f9;
             display: flex;
-            padding: 15px 10px 35px;
-            z-index: 500;
+            padding: 15px 0 35px;
+            z-index: 100;
         }
 
-        .nav-btn {
+        .nav-i {
             flex: 1;
             text-align: center;
             color: var(--sub);
             font-size: 11px;
-            font-weight: 800;
+            font-weight: 900;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 5px;
-            position: relative;
         }
 
-        .nav-btn.active {
+        .nav-i.active {
             color: var(--pri);
         }
 
-        .nav-btn .emoji {
+        .nav-i .ic {
             font-size: 24px;
-        }
-
-        .badge-dot {
-            position: absolute;
-            top: -5px;
-            right: 25%;
-            background: var(--red);
-            color: #fff;
-            min-width: 18px;
-            padding: 2px 5px;
-            border-radius: 20px;
-            font-size: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid #fff;
-            font-weight: 900;
         }
 
         #toast {
@@ -438,12 +307,12 @@
             transform: translateX(-50%);
             background: #1e293b;
             color: #fff;
-            padding: 12px 25px;
+            padding: 12px 30px;
             border-radius: 50px;
             font-size: 14px;
-            font-weight: 700;
+            font-weight: 800;
             opacity: 0;
-            transition: 0.3s;
+            transition: .3s;
             z-index: 9999;
         }
     </style>
@@ -451,119 +320,57 @@
 
 <body>
 
-    <div class="shell" id="app">
-        <!-- 步驟 1: 家庭初始化 (僅在沒有 Key 時顯示) -->
-        <div class="full-overlay" id="overlay-setup" style="display:none">
-            <div class="step-card">
-                <div style="font-size:60px">🏰</div>
+    <div class="shell">
+        <!-- 步驟一：家庭名稱 -->
+        <div class="overlay" id="ov-setup">
+            <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center">
+                <div style="font-size:60px; margin-bottom:15px">🏰</div>
                 <h1>HomeSync</h1>
-                <p>您的私密家庭管理空間</p>
-                <input class="inp-big" id="init-family-name" placeholder="請輸入家庭名稱" maxlength="12">
-                <button class="btn-big" onclick="createFamily()">開始使用 ✨</button>
+                <p>您的家，從這裡開始。<br>隱私已加密，請放心使用。</p>
+                <input class="inp-grp" id="i-fam" placeholder="您的家庭名稱 (例如: 我們家)"
+                    style="width:100%; border:3px solid #f1f5f9; background:#fff; margin-bottom:20px; text-align:center; padding:20px; border-radius:20px; font-size:18px; outline:none">
+                <button class="btn-go ready" onclick="makeHome()">建立家空間 ✨</button>
             </div>
         </div>
 
-        <!-- 步驟 2: 角色選擇 (必經過程) -->
-        <div class="full-overlay" id="overlay-identity" style="display:none">
-            <div class="step-card" style="justify-content: flex-start;">
-                <div style="font-size:50px; margin-top:40px">🙋</div>
-                <h1>您是誰？</h1>
-                <p>請選擇或新增您的成員身份</p>
-                <div class="role-grid" id="role-grid-ui"></div>
-                <div style="width:100%; margin-top:20px; padding:20px; background:#f8fafc; border-radius:24px;">
-                    <p style="font-size:12px; font-weight:800; margin-bottom:10px">沒在名單上？</p>
-                    <div class="input-group">
-                        <input id="new-member-input" placeholder="您的名字">
-                        <button onclick="addNewMember()">新增</button>
-                    </div>
-                </div>
-                <button class="btn-big" id="btn-confirm-identity" disabled onclick="enterApp()"
-                    style="margin-top:auto">確定是我，進入！ ✨</button>
+        <!-- 步驟二：角色選擇 (針對截圖修正：確保清單同步刷新) -->
+        <div class="overlay" id="ov-role" style="display:none">
+            <h1>您是誰？</h1>
+            <p>請選擇或在下方新增您的身份</p>
+            <div class="role-area">
+                <div class="role-grid" id="rg-ui"></div>
             </div>
+            <div class="add-box">
+                <label>沒在清單上？</label>
+                <div class="inp-grp">
+                    <input id="i-nm" placeholder="輸入您的名字" maxlength="6">
+                    <button onclick="addM()">新增</button>
+                </div>
+            </div>
+            <button class="btn-go" id="b-go" onclick="boot()">確定是我，進入！ ✨</button>
         </div>
 
-        <!-- 主應用介面 -->
-        <div id="main-app" style="display:none; flex-direction:column; flex:1;">
-            <header class="app-header">
-                <div class="header-row">
-                    <h2 id="display-family-name">家</h2>
-                    <div class="invite-badge" onclick="copyInviteLink()">🔗 邀請家人</div>
+        <!-- 主 App -->
+        <div id="app">
+            <header class="top">
+                <div class="top-row">
+                    <h2 id="top-title">我家</h2>
+                    <div class="share-btn" onclick="copy()">🔗 分享與邀請</div>
                 </div>
-                <div class="member-list" id="member-wall-ui"></div>
+                <div class="wall" id="wall-ui"></div>
             </header>
-
-            <main class="main-content">
-                <!-- 首頁 -->
-                <div class="panel active" id="panel-dash">
-                    <div class="title-bar">目前概況 📋</div>
-                    <div id="urgent-box-ui"></div>
-                    <div class="card" onclick="switchTab('task')"
-                        style="cursor:pointer; display:flex; align-items:center; gap:15px">
-                        <div style="font-size:30px">✋</div>
-                        <div><b>指派任務</b>
-                            <p style="font-size:12px; color:var(--sub)">託付家人幫忙大小事</p>
-                        </div>
-                    </div>
-                    <div class="card" onclick="switchTab('buy')"
-                        style="cursor:pointer; display:flex; align-items:center; gap:15px">
-                        <div style="font-size:30px">🛒</div>
-                        <div><b>採買清單</b>
-                            <p style="font-size:12px; color:var(--sub)">全家人的購物願望</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 託付 -->
-                <div class="panel" id="panel-task">
-                    <div class="title-bar">發送託付 ✉️</div>
-                    <div class="card">
-                        <div class="input-group">
-                            <input id="task-input" placeholder="例如：拿包裹、領包裹">
-                            <button onclick="sendTask()">發送</button>
-                        </div>
-                        <div style="font-size:11px; font-weight:800; color:var(--sub); margin-bottom:8px">指派給：</div>
-                        <div id="task-target-ui" style="display:flex; gap:10px; overflow-x:auto; padding-bottom:5px;">
-                        </div>
-                    </div>
-                    <div class="title-bar" id="my-task-title">我的任務 <span>0</span></div>
-                    <div id="my-task-list-ui"></div>
-                </div>
-
-                <!-- 採買 -->
-                <div class="panel" id="panel-buy">
-                    <div class="title-bar">清單功能 🛒</div>
-                    <div class="card">
-                        <div class="input-group">
-                            <input id="buy-input" placeholder="想買什麼？">
-                            <button onclick="addBuy()">加入</button>
-                        </div>
-                    </div>
-                    <div id="buy-list-ui"></div>
-                </div>
-
-                <!-- 庫存 -->
-                <div class="panel" id="panel-inv">
-                    <div class="title-bar">物資管理 📦</div>
-                    <div class="card">
-                        <div class="input-group">
-                            <input id="inv-name-input" placeholder="物品">
-                            <input type="number" id="inv-qty-input" value="1" style="flex:0.4; text-align:center;">
-                            <button onclick="addInventory()">追蹤</button>
-                        </div>
-                    </div>
-                    <div class="grid-2" id="inv-grid-ui"></div>
+            <main style="flex:1; padding:20px; overflow-y:auto; text-align:center; color:var(--sub)">
+                <div style="margin-top:50px">
+                    <div style="font-size:60px">☕️</div>
+                    <h3>這是一個私密的空間</h3>
+                    <p>點選下方功能開始管理家務</p>
                 </div>
             </main>
-
-            <nav class="navbar">
-                <div class="nav-btn active" onclick="switchTab('dash')"><span class="emoji">🏠</span>首頁</div>
-                <div class="nav-btn" onclick="switchTab('task')"><span class="emoji">✋</span>託付<div class="badge-dot"
-                        id="dot-task" style="display:none">0</div>
-                </div>
-                <div class="nav-btn" onclick="switchTab('buy')"><span class="emoji">🛒</span>採買<div class="badge-dot"
-                        id="dot-buy" style="display:none">0</div>
-                </div>
-                <div class="nav-btn" onclick="switchTab('inv')"><span class="emoji">📦</span>庫存</div>
+            <nav class="nav">
+                <div class="nav-i active"><span class="ic">🏠</span>首頁</div>
+                <div class="nav-i"><span class="ic">✋</span>託付</div>
+                <div class="nav-i"><span class="ic">🛒</span>採買</div>
+                <div class="nav-i"><span class="ic">📦</span>庫存</div>
             </nav>
         </div>
     </div>
@@ -571,248 +378,123 @@
     <div id="toast"></div>
 
     <script>
-        // --- 安全與資料庫初始化 ---
-        const FIREBASE_CONFIG = { databaseURL: "https://homesync-private-default-rtdb.firebaseio.com" };
-        firebase.initializeApp(FIREBASE_CONFIG);
+        // --- 火力全開的同步引擎 ---
+        const dbURL = "https://homesync-private-default-rtdb.firebaseio.com";
+        firebase.initializeApp({ databaseURL: dbURL });
         const rdb = firebase.database();
 
-        let familyKey = '', familyName = '', meId = '', currentTab = 'dash', currentTaskTo = '', DB = { m: {}, t: {}, s: {}, v: {} };
+        let fKey = '', fName = '', myId = '', DB = { m: {}, t: {}, s: {}, v: {} };
 
-        // --- 流程控制 ---
-        (function initProcess() {
-            const p = new URLSearchParams(window.location.search);
-            const invite = p.get('join');
-            const savedKey = localStorage.getItem('hs_k');
+        // 1. 生命週期
+        (function () {
+            const p = new URLSearchParams(location.search);
+            const join = p.get('join');
+            const saved = localStorage.getItem('hs_k_v7');
 
-            if (invite) {
-                familyKey = invite;
-                showStep('identity'); // 選我是誰
-                syncFromCloud();
-            } else if (savedKey) {
-                familyKey = savedKey;
-                const savedMe = localStorage.getItem('hs_me_' + familyKey);
-                if (!savedMe) {
-                    showStep('identity');
-                } else {
-                    meId = savedMe;
-                    enterApp();
-                }
-                syncFromCloud();
-            } else {
-                showStep('setup'); // 建立家庭
+            if (join) {
+                fKey = join;
+                document.getElementById('ov-setup').style.display = 'none';
+                document.getElementById('ov-role').style.display = 'flex';
+                sync();
+            } else if (saved) {
+                fKey = saved;
+                myId = localStorage.getItem('hs_me_' + fKey);
+                sync();
+                if (myId) boot(); else { document.getElementById('ov-setup').style.display = 'none'; document.getElementById('ov-role').style.display = 'flex'; }
             }
         })();
 
-        function showStep(s) {
-            document.getElementById('overlay-setup').style.display = (s == 'setup' ? 'flex' : 'none');
-            document.getElementById('overlay-identity').style.display = (s == 'identity' ? 'flex' : 'none');
-        }
-
-        function createFamily() {
-            const n = document.getElementById('init-family-name').value.trim();
-            if (!n) return;
-            familyName = n;
-            familyKey = 'f' + CryptoJS.lib.WordArray.random(12).toString();
-            localStorage.setItem('hs_k', familyKey);
-            saveToCloud();
-            showStep('identity');
-        }
-
-        function syncFromCloud() {
-            rdb.ref('hs/v6/' + familyKey).on('value', snap => {
+        function sync() {
+            rdb.ref('hs/v7/' + fKey).on('value', snap => {
                 const raw = snap.val();
                 if (!raw) return;
-                familyName = raw.name || '我家';
-                if (raw.data) {
+                fName = raw.n || '我家';
+                if (raw.d) {
                     try {
-                        const bytes = CryptoJS.AES.decrypt(raw.data, familyKey);
-                        const newData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-                        DB = newData;
+                        const b = CryptoJS.AES.decrypt(raw.d, fKey);
+                        DB = JSON.parse(b.toString(CryptoJS.enc.Utf8));
                     } catch (e) { }
                 }
-                refreshUI();
+                renderRoles();
             });
         }
 
-        function saveToCloud() {
-            const enc = CryptoJS.AES.encrypt(JSON.stringify(DB), familyKey).toString();
-            rdb.ref('hs/v6/' + familyKey).update({ name: familyName, data: enc, ts: Date.now() });
+        function save() {
+            const enc = CryptoJS.AES.encrypt(JSON.stringify(DB), fKey).toString();
+            rdb.ref('hs/v7/' + fKey).update({ n: fName, d: enc, ts: Date.now() });
         }
 
-        function refreshUI() {
-            renderRoleSelection();
-            if (meId) renderApp();
+        // 2. 步驟功能
+        function makeHome() {
+            const n = document.getElementById('i-fam').value.trim(); if (!n) return;
+            fName = n;
+            fKey = 'k' + Math.random().toString(36).substr(2, 10);
+            localStorage.setItem('hs_k_v7', fKey);
+            save();
+            document.getElementById('ov-setup').style.display = 'none';
+            document.getElementById('ov-role').style.display = 'flex';
+            renderRoles();
         }
 
-        // --- 角色管離 (修正重複問題) ---
-        function renderRoleSelection() {
-            const grid = document.getElementById('role-grid-ui');
+        function renderRoles() {
+            const grid = document.getElementById('rg-ui');
             const ms = DB.m || {};
             grid.innerHTML = Object.keys(ms).map(id => `
-    <div class="role-item ${meId == id ? 'on' : ''}" onclick="setMe('${id}')">
-      <span class="avatar">${ms[id].e || '🙋'}</span>
-      <b>${ms[id].n}</b>
-    </div>
-  `).join('');
-
-            // 任務指派目標
-            const taskTo = document.getElementById('task-target-ui');
-            taskTo.innerHTML = Object.keys(ms).map(id => `
-    <div style="flex-shrink:0; padding:10px 18px; border-radius:15px; background:${currentTaskTo == id ? 'var(--pri-light)' : '#f1f5f9'}; border:2px solid ${currentTaskTo == id ? 'var(--pri)' : 'transparent'};" onclick="setTaskTo('${id}')">
+    <div class="role-it ${myId == id ? 'on' : ''}" onclick="sel('${id}')">
+      <span class="em">${ms[id].e || '🙋'}</span>
       <b>${ms[id].n}</b>
     </div>
   `).join('');
         }
 
-        function setMe(id) { meId = id; document.getElementById('btn-confirm-identity').disabled = false; renderRoleSelection(); }
-        function setTaskTo(id) { currentTaskTo = id; renderRoleSelection(); }
+        function sel(id) {
+            myId = id;
+            renderRoles();
+            const btn = document.getElementById('b-go');
+            btn.classList.add('ready');
+            btn.disabled = false;
+        }
 
-        function addNewMember() {
-            const n = document.getElementById('new-member-input').value.trim();
+        // ★ 修正重點：點擊新增後，立刻強迫清單重現
+        function addM() {
+            const n = document.getElementById('i-nm').value.trim();
             if (!n) return;
             const id = 'm' + Date.now();
             if (!DB.m) DB.m = {};
-            DB.m[id] = { n, e: '🙋', s: 'home', ts: Date.now() };
-            saveToCloud();
-            document.getElementById('new-member-input').value = '';
+            DB.m[id] = { n, e: '🙋', ts: Date.now() };
+
+            // 1. 立刻同步本地介面
+            renderRoles();
+            // 2. 後台同步雲端
+            save();
+
+            document.getElementById('i-nm').value = '';
+            toast('已新增，請點選頭像進入！');
         }
 
-        function enterApp() {
-            localStorage.setItem('hs_me_' + familyKey, meId);
-            document.getElementById('overlay-setup').classList.add('hide');
-            document.getElementById('overlay-identity').classList.add('hide');
-            setTimeout(() => {
-                document.getElementById('overlay-setup').style.display = 'none';
-                document.getElementById('overlay-identity').style.display = 'none';
-            }, 400);
-            document.getElementById('main-app').style.display = 'flex';
-            document.getElementById('display-family-name').textContent = familyName;
-            renderApp();
-        }
+        function boot() {
+            if (!myId) return;
+            localStorage.setItem('hs_me_' + fKey, myId);
+            document.getElementById('ov-setup').style.display = 'none';
+            document.getElementById('ov-role').style.display = 'none';
+            document.getElementById('app').style.display = 'flex';
+            document.getElementById('top-title').textContent = fName;
 
-        // --- 主介面渲染 ---
-        function switchTab(t) {
-            currentTab = t;
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById('panel-' + t).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach((b, i) => b.classList.toggle('active', ['dash', 'task', 'buy', 'inv'][i] == t));
-            renderApp();
-        }
-
-        function renderApp() {
+            // 渲染主牆
             const ms = DB.m || {};
-            // 牆面
-            document.getElementById('member-wall-ui').innerHTML = Object.keys(ms).map(id => {
-                const m = ms[id];
-                return `<div class="member-card ${id == meId ? 'me' : ''}">
-      <div class="av-circle">${m.e}</div>
-      <div class="info-box"><b>${m.n}${id == meId ? ' (我)' : ''}</b><p>🏡 在家</p></div>
-    </div>`;
-            }).join('');
-
-            if (currentTab == 'dash') renderDash();
-            if (currentTab == 'task') renderTask();
-            if (currentTab == 'buy') renderBuy();
-            if (currentTab == 'inv') renderInv();
-            updateBadges();
-        }
-
-        function renderDash() {
-            const ts = DB.t || {};
-            const my = Object.keys(ts).filter(id => ts[id].to == meId && !ts[id].done);
-            const ui = document.getElementById('urgent-box-ui');
-            ui.innerHTML = my.length ? `
-    <div class="card" style="background:linear-gradient(135deg, #7c3aed, #a855f7); color:#fff; border:none;" onclick="switchTab('task')">
-      <h3>嘿！有 ${my.length} 項託付指派給你</h3>
-      <p style="font-size:12px; opacity:0.9">點此查看詳情並去完成它</p>
+            document.getElementById('wall-ui').innerHTML = Object.keys(ms).map(id => `
+    <div class="ppl ${id == myId ? 'me' : ''}">
+      <div class="av">${ms[id].e || '🙋'}</div>
+      <b style="font-size:16px">${ms[id].n}${id == myId ? ' (我)' : ''}</b>
     </div>
-  ` : '';
+  `).join('');
         }
 
-        function renderTask() {
-            const ts = DB.t || {}, ms = DB.m || {};
-            const my = Object.keys(ts).filter(id => ts[id].to == meId && !ts[id].done);
-            document.getElementById('my-task-title').querySelector('span').textContent = my.length;
-            document.getElementById('my-task-list-ui').innerHTML = my.map(id => `
-    <div class="card" style="border-left:5px solid var(--pri)">
-      <div style="display:flex; justify-content:space-between; align-items:center">
-        <div><b>${ts[id].tt}</b><p style="font-size:11px; color:var(--sub); margin-top:5px">${ms[ts[id].fr].n} 託付的</p></div>
-        <button onclick="taskDone('${id}')" style="background:var(--grn); color:#fff; border:none; padding:10px 18px; border-radius:12px; font-weight:800; font-size:13px">完成</button>
-      </div>
-    </div>
-  `).join('') || '<p style="text-align:center; padding:30px; color:var(--sub); font-size:14px">暫無任務 ✨</p>';
-        }
-
-        function renderBuy() {
-            const sh = DB.s || {}, ms = DB.m || {};
-            const pend = Object.keys(sh).filter(id => !sh[id].done);
-            document.getElementById('buy-list-ui').innerHTML = pend.map(id => `
-    <div class="card" style="display:flex; align-items:center; gap:12px">
-      <div style="width:28px; height:28px; border:3px solid #e2e8f0; border-radius:50%; cursor:pointer" onclick="buyDone('${id}')"></div>
-      <div style="flex:1"><b>${sh[id].n}</b></div>
-      <div style="font-size:10px; color:var(--sub)">${ms[sh[id].by].n} 新增</div>
-    </div>
-  `).join('') || '<p style="text-align:center; padding:30px; color:var(--sub); font-size:14px">清單已清空 🛒</p>';
-        }
-
-        function renderInv() {
-            const iv = DB.v || {}, ids = Object.keys(iv);
-            document.getElementById('inv-grid-ui').innerHTML = ids.map(id => {
-                const it = iv[id], low = it.q <= 1;
-                return `<div class="inv-card ${low ? 'low' : ''}">
-      <b>${it.n}</b>
-      <div class="inv-count">${it.q}</div>
-      <div class="inv-actions">
-        <button onclick="chgInv('${id}',-1)">-</button>
-        <button onclick="chgInv('${id}',1)">+</button>
-      </div>
-    </div>`;
-            }).join('');
-        }
-
-        // --- 操作功能 ---
-        function sendTask() {
-            const v = document.getElementById('task-input').value.trim();
-            if (!v || !currentTaskTo) return toast(!currentTaskTo ? '請選擇指派對象！' : '請輸入任務內容');
-            if (!DB.t) DB.t = {};
-            DB.t['t' + Date.now()] = { tt: v, fr: meId, to: currentTaskTo, done: false };
-            saveToCloud(); document.getElementById('task-input').value = ''; toast('已指派！');
-        }
-        function taskDone(id) { DB.t[id].done = true; saveToCloud(); toast('完成！🎉'); }
-
-        function addBuy() {
-            const v = document.getElementById('buy-input').value.trim();
-            if (!v) return;
-            if (!DB.s) DB.s = {};
-            DB.s['s' + Date.now()] = { n: v, by: meId, done: false };
-            saveToCloud(); document.getElementById('buy-input').value = '';
-        }
-        function buyDone(id) {
-            const item = DB.s[id]; item.done = true;
-            if (!DB.v) DB.v = {};
-            const ex = Object.keys(DB.v).find(k => DB.v[k].n == item.n);
-            if (ex) DB.v[ex].q += 1; else DB.v['v' + Date.now()] = { n: item.n, q: 1 };
-            saveToCloud(); toast(item.n + ' 已入庫！');
-        }
-
-        function addInventory() {
-            const n = document.getElementById('inv-name-input').value.trim();
-            const q = parseInt(document.getElementById('inv-qty-input').value);
-            if (!n) return;
-            if (!DB.v) DB.v = {};
-            DB.v['v' + Date.now()] = { n, q };
-            saveToCloud();
-        }
-        function chgInv(id, d) { DB.v[id].q = Math.max(0, DB.v[id].q + d); saveToCloud(); }
-
-        function copyInviteLink() {
-            const url = window.location.href.split('?')[0] + '?join=' + familyKey;
+        function copy() {
+            const url = window.location.href.split('?')[0] + '?join=' + fKey;
             navigator.clipboard.writeText(url).then(() => toast('🔗 安全連結已複製！傳給家人吧'));
         }
-        function updateBadges() {
-            const ts = DB.t || {}, mys = Object.keys(ts).filter(i => ts[i].to == meId && !ts[i].done).length;
-            const dotT = document.getElementById('dot-task'); dotT.style.display = mys > 0 ? 'flex' : 'none'; dotT.textContent = mys;
-        }
+
         function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.style.opacity = 1; setTimeout(() => t.style.opacity = 0, 2500); }
     </script>
 </body>
