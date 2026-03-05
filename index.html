@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HomeSync 家庭管家</title>
+    <title>HomeSync 家庭管家 | 實時連動版</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -14,7 +14,7 @@
         :root {
             --pri: #6366f1;
             --pri-bg: #f5f6ff;
-            --bg: #f3f4f6;
+            --bg: #f9fafb;
             --w: #fff;
             --txt: #111827;
             --sub: #6b7280;
@@ -40,7 +40,6 @@
             min-height: 100vh;
         }
 
-        /* 容器固定寬度，防止跑版 */
         .shell {
             width: 100%;
             max-width: 440px;
@@ -53,7 +52,7 @@
             overflow-x: hidden;
         }
 
-        /* 全螢幕引導牆 */
+        /* 引導牆面 */
         .onboard {
             position: fixed;
             inset: 0;
@@ -101,7 +100,7 @@
         }
 
         /* 輸入與按鈕 */
-        .inp-full {
+        .inp-f {
             width: 100%;
             border: 3px solid #f1f5f9;
             background: #f8fafc;
@@ -114,7 +113,7 @@
             outline: none;
         }
 
-        .inp-full:focus {
+        .inp-f:focus {
             border-color: var(--pri);
             background: #fff;
         }
@@ -132,14 +131,8 @@
             box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
         }
 
-        .btn-p:disabled {
-            background: #cbd5e1;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-
-        /* 身分選擇網格 */
-        .role-box {
+        /* 角色選擇 */
+        .role-grid {
             width: 100%;
             max-height: 40vh;
             overflow-y: auto;
@@ -157,7 +150,7 @@
             padding: 25px 10px;
             cursor: pointer;
             transition: 0.2s;
-            position: relative;
+            text-align: center;
         }
 
         .role-i.on {
@@ -231,30 +224,36 @@
             border-bottom: 1px solid #f1f5f9;
         }
 
-        .header-top {
+        .header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
         }
 
-        .header h2 {
+        .status-dot {
+            font-size: 10px;
+            color: var(--grn);
+            background: #d1fae5;
+            padding: 4px 10px;
+            border-radius: 8px;
             font-weight: 900;
-            color: var(--pri);
-            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
-        .invite-chip {
+        .invite-btn {
             background: #fef3c7;
             color: #92400e;
-            padding: 10px 16px;
-            border-radius: 14px;
+            padding: 10px 18px;
+            border-radius: 15px;
             font-size: 12px;
             font-weight: 900;
             cursor: pointer;
         }
 
-        .member-wall {
+        .wall {
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -267,11 +266,12 @@
             padding: 15px;
             background: #f9fafb;
             border-radius: 20px;
+            border: 2px solid transparent;
         }
 
         .p-card.me {
             background: var(--pri-bg);
-            border: 2px solid rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.1);
         }
 
         .p-av {
@@ -286,7 +286,19 @@
             box-shadow: var(--sh);
         }
 
-        .tab-nav {
+        #view-content {
+            flex: 1;
+            padding: 20px;
+            position: relative;
+        }
+
+        .empty-msg {
+            margin-top: 60px;
+            text-align: center;
+            color: var(--sub);
+        }
+
+        .nav {
             position: fixed;
             bottom: 0;
             left: 50%;
@@ -301,7 +313,7 @@
             z-index: 500;
         }
 
-        .nav-btn {
+        .nav-i {
             flex: 1;
             text-align: center;
             color: var(--sub);
@@ -313,11 +325,11 @@
             gap: 5px;
         }
 
-        .nav-btn.on {
+        .nav-i.active {
             color: var(--pri);
         }
 
-        .nav-btn .emoji {
+        .nav-i .ic {
             font-size: 24px;
         }
 
@@ -342,54 +354,55 @@
 <body>
 
     <div class="shell">
-        <!-- 引導流程牆 -->
-        <div class="onboard" id="onboard-wall">
-            <!-- 步驟 1: 命名家庭 -->
-            <div class="step" id="step-name">
-                <div style="font-size:60px">🏰</div>
+        <!-- 引導牆面 -->
+        <div class="onboard" id="ob-wall">
+            <div class="step" id="st-name">
+                <div style="font-size:60px">🏯</div>
                 <h1>HomeSync</h1>
-                <p>首先，為您的家庭空間取個名字</p>
-                <input class="inp-full" id="f-name-input" placeholder="家庭名稱（如：我們家）" maxlength="12">
-                <button class="btn-p" onclick="gotoIdentity()">下一步 ✨</button>
+                <p>首先，請為家庭空間命名</p>
+                <input class="inp-f" id="f-name-i" placeholder="例如：我們這一家" maxlength="12">
+                <button class="btn-p" onclick="doCreate()">開始建立 ✨</button>
             </div>
 
-            <!-- 步驟 2: 選分身 -->
-            <div class="step" id="step-identity">
+            <div class="step" id="st-role">
                 <h1 style="font-size:28px">我是誰？</h1>
-                <p>請選擇或新增您的成員身份</p>
-                <div class="role-box" id="role-render"></div>
+                <p>邀請者與家人都必須選取自己的身分</p>
+                <div class="role-grid" id="list-render"></div>
                 <div class="add-tool">
                     <label>沒在清單上？</label>
                     <div class="inp-row">
-                        <input id="new-m-name" placeholder="您的名字" maxlength="6">
-                        <button onclick="addMe()">新增</button>
+                        <input id="new-name-i" placeholder="您的名字" maxlength="6">
+                        <button onclick="addNewM()">新增</button>
                     </div>
                 </div>
-                <button class="btn-p" id="btn-enter" disabled onclick="finalEnter()">確定是我，進入家庭 ✨</button>
+                <button class="btn-p" id="btn-start" disabled onclick="doFinal()">確定是我，進入工具 ✨</button>
             </div>
         </div>
 
         <!-- 主 App 區 -->
         <div id="app">
             <header class="header">
-                <div class="header-top">
-                    <h2 id="display-f-name">HomeSync</h2>
-                    <div class="invite-chip" onclick="copyShare()">🔗 邀請家人</div>
+                <div class="header-row">
+                    <div>
+                        <h2 id="f-name-show">HomeSync</h2>
+                        <div class="status-dot">● 已安全同步中</div>
+                    </div>
+                    <div class="invite-btn" onclick="shareMe()">🔗 邀請家人</div>
                 </div>
-                <div class="member-wall" id="wall-render"></div>
+                <div class="wall" id="wall-render"></div>
             </header>
-            <main style="flex:1; padding:20px; text-align:center; color:var(--sub)">
-                <div style="margin-top:60px">
-                    <div style="font-size:60px">☕️</div>
-                    <h3>私密同步已開啟</h3>
-                    <p>點擊下方按鈕開始管理家務</p>
+            <main id="view-content">
+                <div class="empty-msg">
+                    <div style="font-size:60px">💡</div>
+                    <h3>已與家人連動</h3>
+                    <p>點擊下方功能開始共同管理</p>
                 </div>
             </main>
-            <nav class="tab-nav">
-                <div class="nav-btn on"><span class="emoji">🏠</span>首頁</div>
-                <div class="nav-btn"><span class="emoji">✋</span>託付</div>
-                <div class="nav-btn"><span class="emoji">🛒</span>採買</div>
-                <div class="nav-btn"><span class="emoji">📦</span>庫存</div>
+            <nav class="nav">
+                <div class="nav-i active"><span class="ic">🏠</span>首頁</div>
+                <div class="nav-i"><span class="ic">✋</span>託付</div>
+                <div class="nav-i"><span class="ic">🛒</span>採買</div>
+                <div class="nav-i"><span class="ic">📦</span>庫存</div>
             </nav>
         </div>
     </div>
@@ -397,81 +410,82 @@
     <div id="toast"></div>
 
     <script>
-        // --- 冷酷穩定的雲端引擎 ---
+        // --- 實時連動核心引擎 (V9) ---
         const dbURL = "https://homesync-private-default-rtdb.firebaseio.com";
         firebase.initializeApp({ databaseURL: dbURL });
         const rdb = firebase.database();
 
-        let fKey = '', fName = '', meId = '', DB = { m: {}, t: {}, s: {}, v: {} };
+        let famK = '', famN = '', meId = '', DB = { m: {}, t: {}, s: {}, v: {} };
 
-        // 1. 初始化進入邏輯
+        // 1. 生命週期：判斷是建立者還是被邀請者
         (function init() {
-            const p = new URLSearchParams(location.search);
-            const invite = p.get('join');
-            const savedKey = localStorage.getItem('hs_k_v8');
+            const params = new URLSearchParams(location.search);
+            const joinCode = params.get('join');
+            const savedKey = localStorage.getItem('hs_k_v9');
 
-            if (invite) {
-                // 【家人加入流】: 強制進入選分身頁面
-                fKey = invite;
-                showStep('identity');
-                syncCloud();
+            if (joinCode) {
+                // 【家人加入】: 強制使用邀請碼
+                famK = joinCode;
+                localStorage.setItem('hs_k_v9', famK);
+                startSync();
             } else if (savedKey) {
-                // 【老用戶回歸流】
-                fKey = savedKey;
-                meId = localStorage.getItem('hs_me_' + fKey);
-                syncCloud();
+                // 【老用戶】
+                famK = savedKey;
+                meId = localStorage.getItem('hs_me_' + famK);
+                startSync();
                 if (meId) {
-                    document.getElementById('onboard-wall').classList.add('hide');
+                    document.getElementById('ob-wall').classList.add('hide');
                     document.getElementById('app').style.display = 'flex';
                 } else {
-                    showStep('identity');
+                    showStep('role');
                 }
             } else {
-                // 【新建立者流】: 第一步命名
+                // 【建立者】
                 showStep('name');
             }
         })();
 
         function showStep(s) {
             document.querySelectorAll('.step').forEach(div => div.classList.remove('active'));
-            document.getElementById('step-' + s).classList.add('active');
+            document.getElementById('st-' + s).classList.add('active');
         }
 
-        function syncCloud() {
-            rdb.ref('hs/v8/' + fKey).on('value', snap => {
+        // 實時連動監聽
+        function startSync() {
+            rdb.ref('hs/v9/' + famK).on('value', snap => {
                 const raw = snap.val();
                 if (!raw) return;
-                fName = raw.n || '我家';
+                famN = raw.n || '我家';
                 if (raw.d) {
                     try {
-                        const b = CryptoJS.AES.decrypt(raw.d, fKey);
-                        DB = JSON.parse(b.toString(CryptoJS.enc.Utf8));
-                    } catch (e) { }
+                        const bytes = CryptoJS.AES.decrypt(raw.d, famK);
+                        DB = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+                    } catch (e) { console.error("解密失敗"); }
                 }
                 renderRoles();
                 if (meId) renderApp();
             });
+            showStep('role');
         }
 
-        function saveCloud() {
-            const enc = CryptoJS.AES.encrypt(JSON.stringify(DB), fKey).toString();
-            rdb.ref('hs/v8/' + fKey).update({ n: fName, d: enc, ts: Date.now() });
+        function save() {
+            const enc = CryptoJS.AES.encrypt(JSON.stringify(DB), famK).toString();
+            rdb.ref('hs/v9/' + famK).update({ n: famN, d: enc, ts: Date.now() });
         }
 
         // 2. 引導邏輯
-        function gotoIdentity() {
-            const val = document.getElementById('f-name-input').value.trim();
+        function doCreate() {
+            const val = document.getElementById('f-name-i').value.trim();
             if (!val) return;
-            fName = val;
-            fKey = 'f' + Math.random().toString(36).substr(2, 12);
-            localStorage.setItem('hs_k_v8', fKey);
-            saveCloud();
-            showStep('identity');
-            renderRoles();
+            famN = val;
+            famK = 'k' + Math.random().toString(36).substr(2, 12);
+            localStorage.setItem('hs_k_v9', famK);
+            save();
+            startSync();
         }
 
         function renderRoles() {
-            const grid = document.getElementById('role-render');
+            const grid = document.getElementById('list-render');
             const ms = DB.m || {};
             grid.innerHTML = Object.keys(ms).map(id => `
     <div class="role-i ${meId == id ? 'on' : ''}" onclick="selMe('${id}')">
@@ -484,35 +498,32 @@
         function selMe(id) {
             meId = id;
             renderRoles();
-            document.getElementById('btn-enter').disabled = false;
+            document.getElementById('btn-start').disabled = false;
         }
 
-        // 修正：新增成員後立即刷新，不等待雲端
-        function addMe() {
-            const n = document.getElementById('new-m-name').value.trim();
+        function addNewM() {
+            const n = document.getElementById('new-name-i').value.trim();
             if (!n) return;
             const id = 'm' + Date.now();
             if (!DB.m) DB.m = {};
             DB.m[id] = { n, e: '🙋', ts: Date.now() };
 
-            // 立即介面反饋
+            // 關鍵：先在畫面上顯示
             renderRoles();
-            saveCloud();
-
-            document.getElementById('new-m-name').value = '';
-            toast('已新增，請點選頭像進入！');
+            save();
+            document.getElementById('new-name-i').value = '';
         }
 
-        function finalEnter() {
+        function doFinal() {
             if (!meId) return;
-            localStorage.setItem('hs_me_' + fKey, meId);
-            document.getElementById('onboard-wall').classList.add('hide');
+            localStorage.setItem('hs_me_' + famK, meId);
+            document.getElementById('ob-wall').classList.add('hide');
             document.getElementById('app').style.display = 'flex';
-            document.getElementById('display-f-name').textContent = fName;
+            document.getElementById('f-name-show').textContent = famN;
             renderApp();
         }
 
-        // 3. App 功能
+        // 3. App 功能渲染
         function renderApp() {
             const ms = DB.m || {};
             document.getElementById('wall-render').innerHTML = Object.keys(ms).map(id => `
@@ -523,9 +534,9 @@
   `).join('');
         }
 
-        function copyShare() {
-            const url = window.location.href.split('?')[0] + '?join=' + fKey;
-            navigator.clipboard.writeText(url).then(() => toast('🔗 家庭邀請連結已複製！傳給家人吧'));
+        function shareMe() {
+            const url = window.location.href.split('?')[0] + '?join=' + famK;
+            navigator.clipboard.writeText(url).then(() => toast('🔗 家庭連動連結已複製！傳給家人吧'));
         }
 
         function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.style.opacity = 1; setTimeout(() => t.style.opacity = 0, 2500); }
