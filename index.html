@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="HomeSync - 全家人一起管理家中大小事的免費工具">
+    <title>HomeSync 家庭管家</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏡</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap"
+        rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --pri: #7c3aed;
+            --priL: #ede9fe;
+            --priD: #5b21b6;
+            --grn: #059669;
+            --grnL: #ecfdf5;
+            --org: #d97706;
+            --orgL: #fffbeb;
+            --red: #dc2626;
+            --redL: #fef2f2;
+            --blue: #2563eb;
+            --blueL: #eff6ff;
+            --bg: #f5f3ff;
+            --w: #fff;
+            --txt: #1e1b4b;
+            --sub: #6b7280;
+            --dim: #9ca3af;
+            --bdr: #e5e7eb;
+            --rad: 18px;
+            --sh: 0 4px 15px rgba(0, 0, 0, .06);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent
+        }
+
+        html {
+            height: 100%
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: var(--bg);
+            color: var(--txt);
+            min-height: 100%;
+            overflow-x: hidden
+        }
+
+        button {
+            font-family: inherit;
+            cursor: pointer;
+            border: none
+        }
+
+        input,
+        textarea {
+            font-family: inherit;
+            outline: none
+        }
+
+        .shell {
+            max-width: 440px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: var(--w);
+            display: flex;
+            flex-direction: column;
+            position: relative
+        }
+
+        /* ======= 第零步：創建/加入 家庭 ======= */
+        .page-init {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            background: linear-gradient(160deg, #7c3aed 0%, #a78bfa 50%, #c4b5fd 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 25px
+        }
+
+        .page-init.hide {
+            display: none
+        }
+
+        .init-card {
+            background: #fff;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 32px;
+            padding: 40px 28px;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, .2)
+        }
+
+        .init-card h1 {
+            font-size: 30px;
+            font-weight: 900;
+            margin-bottom: 6px;
+            color: var(--pri)
+        }
+
+        .init-card .sub {
+            color: var(--sub);
+            font-size: 13px;
+            margin-bottom: 30px;
+            line-height: 1.6
+        }
+
+        .init-input {
+            width: 100%;
+            border: 2.5px solid var(--bdr);
+            padding: 16px;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 15px;
+            transition: .2s
+        }
+
+        .init-input:focus {
+            border-color: var(--pri);
+            box-shadow: 0 0 0 4px var(--priL)
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 18px;
+            border-radius: 50px;
+            font-size: 17px;
+            font-weight: 900;
+            color: #fff;
+            background: var(--pri);
+            box-shadow: 0 8px 25px rgba(124, 58, 237, .35);
+            transition: .15s
+        }
+
+        .btn-main:active {
+            transform: scale(.96)
+        }
+
+        /* 加入模式 */
+        .join-card {
+            display: none
+        }
+
+        .join-card .fam-show {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--pri);
+            margin: 20px 0
+        }
+
+        /* ======= 第一步：角色選擇 ======= */
+        .page-role {
+            position: fixed;
+            inset: 0;
+            z-index: 8998;
+            background: var(--w);
+            padding: 35px 20px;
+            display: none;
+            flex-direction: column;
+            overflow-y: auto
+        }
+
+        .page-role.show {
+            display: flex
+        }
+
+        .role-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin: 20px 0
+        }
+
+        .role-card {
+            background: var(--bg);
+            border-radius: 22px;
+            padding: 24px 12px;
+            text-align: center;
+            border: 3px solid transparent;
+            transition: .2s
+        }
+
+        .role-card.on {
+            border-color: var(--pri);
+            background: var(--priL)
+        }
+
+        .role-card .big-em {
+            font-size: 42px;
+            display: block;
+            margin-bottom: 8px
+        }
+
+        .role-card .role-nm {
+            font-size: 15px;
+            font-weight: 900
+        }
+
+        .add-box {
+            background: var(--bg);
+            padding: 20px;
+            border-radius: 22px;
+            margin-top: 10px
+        }
+
+        .add-box .row {
+            display: flex;
+            gap: 10px
+        }
+
+        .add-box input {
+            flex: 1;
+            border: 2px solid var(--bdr);
+            padding: 14px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700
+        }
+
+        .add-box input:focus {
+            border-color: var(--pri)
+        }
+
+        .add-box button {
+            background: var(--pri);
+            color: #fff;
+            border-radius: 14px;
+            padding: 0 22px;
+            font-weight: 900;
+            font-size: 16px
+        }
+
+        /* ======= 主頁面 ======= */
+        .app {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            overflow: hidden
+        }
+
+        .app.on {
+            display: flex
+        }
+
+        .top {
+            padding: 20px 20px 0;
+            border-bottom: 1px solid var(--bdr);
+            background: var(--w);
+            position: sticky;
+            top: 0;
+            z-index: 100
+        }
+
+        .top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px
+        }
+
+        .top-row h1 {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--pri)
+        }
+
+        .invite-chip {
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 12px;
+            font-weight: 800;
+            padding: 7px 14px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px
+        }
+
+        /* 成員動態列 - 大條清晰 */
+        .ppl-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 5px 0 16px
+        }
+
+        .ppl-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg);
+            border-radius: 16px;
+            transition: .15s
+        }
+
+        .ppl-item:active {
+            transform: scale(.98)
+        }
+
+        .ppl-item.me {
+            background: var(--priL);
+            box-shadow: inset 0 0 0 2px rgba(124, 58, 237, .1)
+        }
+
+        .ppl-av {
+            width: 42px;
+            height: 42px;
+            background: var(--w);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: var(--sh)
+        }
+
+        .ppl-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .ppl-info b {
+            font-size: 14px;
+            font-weight: 900;
+            display: block
+        }
+
+        .ppl-info .ppl-note {
+            font-size: 11px;
+            color: var(--sub);
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .ppl-st {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 5px 10px;
+            border-radius: 10px;
+            white-space: nowrap;
+            flex-shrink: 0
+        }
+
+        .st-home {
+            background: #d1fae5;
+            color: #065f46
+        }
+
+        .st-work {
+            background: #fed7aa;
+            color: #9a3412
+        }
+
+        .st-way {
+            background: #bfdbfe;
+            color: #1e40af
+        }
+
+        .st-out {
+            background: #fef08a;
+            color: #854d0e
+        }
+
+        .st-rest {
+            background: #e9d5ff;
+            color: #6b21a8
+        }
+
+        .st-busy {
+            background: #fecaca;
+            color: #991b1b
+        }
+
+        /* 視圖內容 */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 20px 120px;
+            -webkit-overflow-scrolling: touch
+        }
+
+        .panel {
+            display: none;
+            animation: fadeUp .25s ease-out
+        }
+
+        .panel.on {
+            display: block
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: none
+            }
+        }
+
+        .sec-t {
+            font-size: 17px;
+            font-weight: 900;
+            margin: 24px 0 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px
+        }
+
+        .sec-t .num {
+            font-size: 10px;
+            background: var(--red);
+            color: #fff;
+            padding: 2px 7px;
+            border-radius: 8px;
+            font-weight: 900
+        }
+
+        /* 卡片 */
+        .card {
+            background: var(--w);
+            border-radius: var(--rad);
+            padding: 18px;
+            margin-bottom: 12px;
+            box-shadow: var(--sh);
+            border: 1px solid rgba(0, 0, 0, .03)
+        }
+
+        .card.hl {
+            background: var(--priL);
+            border-left: 5px solid var(--pri)
+        }
+
+        .card.purple {
+            background: linear-gradient(135deg, #7c3aed, #a78bfa);
+            color: #fff;
+            border: none
+        }
+
+        .card.warn {
+            background: var(--orgL);
+            border-left: 5px solid var(--org)
+        }
+
+        /* 輸入列 */
+        .inp-bar {
+            display: flex;
+            gap: 8px;
+            background: #f3f4f6;
+            padding: 6px;
+            border-radius: 16px;
+            margin-bottom: 14px
+        }
+
+        .inp-bar input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            min-width: 0
+        }
+
+        .inp-bar button {
+            background: var(--pri);
+            color: #fff;
+            padding: 0 20px;
+            border-radius: 12px;
+            font-weight: 900;
+            font-size: 14px;
+            white-space: nowrap
+        }
+
+        /* 指派人選 */
+        .pick-row {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            margin-bottom: 8px
+        }
+
+        .pick-row::-webkit-scrollbar {
+            display: none
+        }
+
+        .pk {
+            flex-shrink: 0;
+            padding: 9px 16px;
+            border-radius: 14px;
+            background: #f3f4f6;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--sub);
+            border: 2.5px solid transparent
+        }
+
+        .pk.on {
+            border-color: var(--pri);
+            background: var(--priL);
+            color: var(--pri)
+        }
+
+        /* 任務卡片 */
+        .task-body {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px
+        }
+
+        .task-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .task-info .tt {
+            font-size: 15px;
+            font-weight: 900
+        }
+
+        .task-info .tm {
+            font-size: 11px;
+            color: var(--sub);
+            margin-top: 3px
+        }
+
+        .task-reply {
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: #f9fafb;
+            border-radius: 12px;
+            border-left: 3px solid var(--org);
+            font-size: 12px;
+            color: var(--sub)
+        }
+
+        .task-reply b {
+            color: var(--txt)
+        }
+
+        .btn-done {
+            background: var(--grn);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 13px;
+            flex-shrink: 0;
+            white-space: nowrap
+        }
+
+        .btn-reply {
+            background: none;
+            color: var(--pri);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 5px 0;
+            margin-top: 5px
+        }
+
+        /* 採買項目 */
+        .buy-item {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .buy-item .buy-info {
+            flex: 1;
+            min-width: 0
+        }
+
+        .buy-item .buy-info .bn {
+            font-size: 15px;
+            font-weight: 800
+        }
+
+        .buy-item .buy-info .bm {
+            font-size: 11px;
+            color: var(--sub);
+            margin-top: 2px
+        }
+
+        .btn-bought {
+            background: var(--grn);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 14px;
+            font-weight: 900;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0
+        }
+
+        /* 庫存 */
+        .inv-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px
+        }
+
+        .inv-card {
+            background: var(--w);
+            border-radius: var(--rad);
+            padding: 16px;
+            text-align: center;
+            box-shadow: var(--sh);
+            border: 2.5px solid transparent;
+            position: relative
+        }
+
+        .inv-card.low {
+            border-color: var(--org);
+            background: var(--orgL)
+        }
+
+        .inv-card.zero {
+            border-color: var(--red);
+            background: var(--redL)
+        }
+
+        .inv-nm {
+            font-size: 14px;
+            font-weight: 900;
+            margin-bottom: 8px
+        }
+
+        .inv-num {
+            font-size: 26px;
+            font-weight: 900;
+            margin: 8px 0
+        }
+
+        .inv-ctrl {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px
+        }
+
+        .inv-ctrl button {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #f3f4f6;
+            font-size: 18px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .inv-ctrl button:active {
+            background: var(--priL)
+        }
+
+        .inv-alert {
+            font-size: 10px;
+            color: var(--sub);
+            margin-top: 6px
+        }
+
+        .inv-tag {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-top: 6px
+        }
+
+        .inv-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 6px
+        }
+
+        .inv-actions button {
+            flex: 1;
+            padding: 7px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 800
+        }
+
+        /* 底部導覽 */
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 440px;
+            background: rgba(255, 255, 255, .96);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid var(--bdr);
+            display: flex;
+            padding: 10px 8px 28px;
+            z-index: 200
+        }
+
+        .nb {
+            flex: 1;
+            text-align: center;
+            color: var(--dim);
+            font-size: 10px;
+            font-weight: 800;
+            background: none;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px
+        }
+
+        .nb.on {
+            color: var(--pri)
+        }
+
+        .nb .ic {
+            font-size: 22px;
+            display: block
+        }
+
+        .nb .rd {
+            position: absolute;
+            top: -4px;
+            right: 15%;
+            background: var(--red);
+            color: #fff;
+            min-width: 17px;
+            height: 17px;
+            border-radius: 10px;
+            font-size: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            border: 2px solid #fff
+        }
+
+        /* 抽屜板 */
+        .drw-bg {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, .45);
+            z-index: 1000;
+            display: none;
+            align-items: flex-end;
+            justify-content: center
+        }
+
+        .drw-bg.on {
+            display: flex
+        }
+
+        .drw {
+            background: #fff;
+            width: 100%;
+            max-width: 440px;
+            border-radius: 30px 30px 0 0;
+            padding: 30px 20px 40px;
+            animation: drwUp .3s ease-out;
+            max-height: 85vh;
+            overflow-y: auto
+        }
+
+        @keyframes drwUp {
+            from {
+                transform: translateY(100%)
+            }
+
+            to {
+                transform: none
+            }
+        }
+
+        .drw h3 {
+            text-align: center;
+            font-weight: 900;
+            margin-bottom: 20px
+        }
+
+        .st-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px
+        }
+
+        .st-cell {
+            background: var(--bg);
+            padding: 16px 8px;
+            border-radius: 18px;
+            text-align: center;
+            border: 2.5px solid transparent;
+            transition: .15s
+        }
+
+        .st-cell.on {
+            border-color: var(--pri);
+            background: var(--priL)
+        }
+
+        .st-cell .se {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 4px
+        }
+
+        .st-cell .sl {
+            font-size: 12px;
+            font-weight: 800
+        }
+
+        .note-input {
+            width: 100%;
+            border: 2px solid var(--bdr);
+            padding: 14px;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-top: 10px;
+            resize: none;
+            min-height: 50px
+        }
+
+        .note-input:focus {
+            border-color: var(--pri)
+        }
+
+        #toast {
+            position: fixed;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--txt);
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 800;
+            opacity: 0;
+            transition: .3s;
+            z-index: 9999;
+            pointer-events: none;
+            white-space: nowrap
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="shell">
+        <!-- === 建立 / 加入 === -->
+        <div class="page-init" id="pgInit">
+            <div class="init-card" id="cardNew">
+                <div style="font-size:52px;margin-bottom:8px">🏡</div>
+                <h1>HomeSync</h1>
+                <div class="sub">全家人一起管大小事<br>建立後分享連結給家人，即可同步</div>
+                <input class="init-input" id="iFamily" placeholder="取個家名（如：我們這一家）" maxlength="10">
+                <button class="btn-main" onclick="createFamily()">建立家庭 ✨</button>
+            </div>
+            <div class="init-card join-card" id="cardJoin">
+                <div style="font-size:52px;margin-bottom:10px">✉️</div>
+                <h1>你收到邀請！</h1>
+                <div class="fam-show" id="joinShow"></div>
+                <button class="btn-main" onclick="confirmJoin()">立刻加入 →</button>
+            </div>
+        </div>
+
+        <!-- === 角色選擇 === -->
+        <div class="page-role" id="pgRole">
+            <h2 style="font-weight:900;font-size:22px">你是家裡的誰？</h2>
+            <p style="color:var(--sub);font-size:13px;margin-top:5px">選你自己，或新增你的名字</p>
+            <div class="role-list" id="roleList"></div>
+            <div class="add-box">
+                <p style="font-size:12px;font-weight:800;color:var(--sub);margin-bottom:10px">新增家庭成員</p>
+                <div class="row">
+                    <input id="iNewName" placeholder="輸入名字" maxlength="6">
+                    <button onclick="addMember()">加入</button>
+                </div>
+            </div>
+            <button class="btn-main" id="bStart" disabled onclick="startApp()" style="margin-top:auto">準備好了 ✨</button>
+        </div>
+
+        <!-- === 主App === -->
+        <div class="app" id="pgApp">
+            <div class="top">
+                <div class="top-row">
+                    <h1 id="appTitle">HomeSync</h1>
+                    <div class="invite-chip" onclick="shareLink()">🔗 邀請家人</div>
+                </div>
+                <div class="ppl-col" id="pplCol"></div>
+            </div>
+            <div class="content">
+                <div class="panel on" id="vHome"></div>
+                <div class="panel" id="vTask"></div>
+                <div class="panel" id="vBuy"></div>
+                <div class="panel" id="vInv"></div>
+            </div>
+            <nav class="nav">
+                <button class="nb on" onclick="go('home')"><span class="ic">🏠</span>首頁</button>
+                <button class="nb" onclick="go('task')"><span class="ic">✋</span>託付<div class="rd" id="dT"
+                        style="display:none">0</div></button>
+                <button class="nb" onclick="go('buy')"><span class="ic">🛒</span>採買<div class="rd" id="dB"
+                        style="display:none">0</div></button>
+                <button class="nb" onclick="go('inv')"><span class="ic">📦</span>庫存<div class="rd" id="dI"
+                        style="display:none">0</div></button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- 狀態更新抽屜 -->
+    <div class="drw-bg" id="drwSt" onclick="if(event.target===this)closeDrw('drwSt')">
+        <div class="drw">
+            <h3>更新我的狀態</h3>
+            <div class="st-grid" id="stGrid"></div>
+            <p style="font-size:12px;font-weight:800;color:var(--sub);margin-bottom:6px">想讓家人知道更多？（選填）</p>
+            <textarea class="note-input" id="stNote" placeholder="例如：等等會去全聯、正在帶狗散步..."></textarea>
+            <button class="btn-main" style="margin-top:18px" onclick="saveStatus()">儲存狀態</button>
+        </div>
+    </div>
+
+    <!-- 回覆抽屜 -->
+    <div class="drw-bg" id="drwReply" onclick="if(event.target===this)closeDrw('drwReply')">
+        <div class="drw">
+            <h3>回覆這個委託</h3>
+            <p id="replyTitle" style="font-weight:900;text-align:center;margin-bottom:15px"></p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:15px" id="quickReplies"></div>
+            <textarea class="note-input" id="replyText" placeholder="或自行輸入..."></textarea>
+            <button class="btn-main" style="margin-top:15px" onclick="sendReply()">送出回覆</button>
+        </div>
+    </div>
+
+    <!-- 庫存編輯抽屜 -->
+    <div class="drw-bg" id="drwInv" onclick="if(event.target===this)closeDrw('drwInv')">
+        <div class="drw">
+            <h3>編輯庫存</h3>
+            <div id="invEditBody"></div>
+            <button class="btn-main" style="margin-top:18px" onclick="saveInvEdit()">儲存變更</button>
+            <button onclick="deleteInv()"
+                style="width:100%;margin-top:10px;padding:14px;border-radius:16px;background:var(--redL);color:var(--red);font-weight:900;font-size:14px">刪除此物品</button>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        // ===== Firebase 連線引擎 (含離線備援) =====
+        let firebaseReady = false;
+        try {
+            firebase.initializeApp({ databaseURL: "https://homesync-share-default-rtdb.firebaseio.com" });
+            firebaseReady = true;
+        } catch (e) { console.warn('Firebase init failed, using localStorage only'); }
+
+        const STATUSES = [
+            { id: 'home', l: '在家', e: '🏠', c: 'st-home' }, { id: 'work', l: '上班中', e: '🏢', c: 'st-work' },
+            { id: 'way', l: '快到家', e: '🏃', c: 'st-way' }, { id: 'out', l: '外出', e: '🚶', c: 'st-out' },
+            { id: 'rest', l: '休息中', e: '💤', c: 'st-rest' }, { id: 'busy', l: '勿擾', e: '🔕', c: 'st-busy' }
+        ];
+        const QUICK_REPLIES = ['今天不行', '明天可以', '我晚點處理', '已經在路上了', '週末再說'];
+
+        let KEY = '', ME = '', TAB = 'home', TGT = '', replyTid = '', editInvId = '';
+        let DB = { name: '', m: {}, t: {}, s: {}, v: {} };
+        let fbRef = null;
+
+        // 關鍵：讀寫函數（Firebase + localStorage 雙備援）
+        function load() { return JSON.parse(localStorage.getItem('hs_' + KEY)) || { name: '', m: {}, t: {}, s: {}, v: {} }; }
+        function save(d) { localStorage.setItem('hs_' + KEY, JSON.stringify(d)); if (fbRef) fbRef.set(d); }
+
+        // ===== 初始化：偵測是否有邀請碼 =====
+        (function () {
+            const p = new URLSearchParams(location.search);
+            const joinCode = p.get('join');
+            const savedKey = localStorage.getItem('hs_lastkey');
+
+            if (joinCode) {
+                KEY = joinCode;
+                document.getElementById('cardNew').style.display = 'none';
+                document.getElementById('cardJoin').style.display = 'block';
+                connectDB(() => {
+                    document.getElementById('joinShow').textContent = '「' + (DB.name || '家') + '」';
+                });
+            } else if (savedKey) {
+                KEY = savedKey;
+                const savedMe = localStorage.getItem('hs_me_' + KEY);
+                connectDB(() => {
+                    if (savedMe && DB.m && DB.m[savedMe]) {
+                        ME = savedMe;
+                        document.getElementById('pgInit').classList.add('hide');
+                        document.getElementById('pgApp').classList.add('on');
+                        render();
+                    }
+                });
+            }
+        })();
+
+        function connectDB(cb) {
+            DB = load();
+            if (firebaseReady) {
+                fbRef = firebase.database().ref('hs/' + KEY);
+                fbRef.on('value', snap => {
+                    const val = snap.val();
+                    if (val) { DB = val; localStorage.setItem('hs_' + KEY, JSON.stringify(DB)); }
+                    else { DB = load(); if (DB.name) save(DB); }
+                    renderRoles();
+                    if (ME) render();
+                });
+            }
+            if (cb) setTimeout(cb, 300);
+        }
+
+        function createFamily() {
+            const n = document.getElementById('iFamily').value.trim();
+            if (!n) return;
+            KEY = 'f' + Math.random().toString(36).substr(2, 8);
+            DB.name = n;
+            localStorage.setItem('hs_lastkey', KEY);
+            save(DB);
+            connectDB();
+            document.getElementById('pgInit').classList.add('hide');
+            document.getElementById('pgRole').classList.add('show');
+        }
+
+        function confirmJoin() {
+            localStorage.setItem('hs_lastkey', KEY);
+            connectDB();
+            document.getElementById('pgInit').classList.add('hide');
+            document.getElementById('pgRole').classList.add('show');
+        }
+
+        // ===== 角色管理 =====
+        function renderRoles() {
+            const ms = DB.m || {};
+            document.getElementById('roleList').innerHTML = Object.keys(ms).map(id =>
+                `<div class="role-card ${ME == id ? 'on' : ''}" onclick="pickMe('${id}')"><span class="big-em">${ms[id].e || '🙋'}</span><div class="role-nm">${ms[id].n}</div></div>`
+            ).join('');
+        }
+
+        function pickMe(id) { ME = id; document.getElementById('bStart').disabled = false; renderRoles(); }
+
+        function addMember() {
+            const n = document.getElementById('iNewName').value.trim(); if (!n) return;
+            const id = 'm' + Date.now();
+            if (!DB.m) DB.m = {};
+            DB.m[id] = { n, e: '🙋', s: 'home', note: '' };
+            save(DB);
+            ME = id;
+            document.getElementById('iNewName').value = '';
+            document.getElementById('bStart').disabled = false;
+            renderRoles();
+            toast('已加入家庭！');
+        }
+
+        function startApp() {
+            if (!ME) return;
+            localStorage.setItem('hs_me_' + KEY, ME);
+            document.getElementById('pgRole').classList.remove('show');
+            document.getElementById('pgApp').classList.add('on');
+            render();
+        }
+
+        // ===== 主要渲染 =====
+        function go(t) {
+            TAB = t;
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('on'));
+            document.getElementById('v' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('on');
+            document.querySelectorAll('.nb').forEach((b, i) => b.classList.toggle('on', ['home', 'task', 'buy', 'inv'][i] === t));
+            render();
+        }
+
+        function render() {
+            const me = DB.m && DB.m[ME];
+            if (!me) return;
+            document.getElementById('appTitle').textContent = DB.name || 'HomeSync';
+            renderPpl();
+            if (TAB === 'home') document.getElementById('vHome').innerHTML = rHome();
+            if (TAB === 'task') document.getElementById('vTask').innerHTML = rTask();
+            if (TAB === 'buy') document.getElementById('vBuy').innerHTML = rBuy();
+            if (TAB === 'inv') document.getElementById('vInv').innerHTML = rInv();
+            dots();
+        }
+
+        function renderPpl() {
+            const ms = DB.m || {};
+            document.getElementById('pplCol').innerHTML = Object.keys(ms).map(id => {
+                const m = ms[id], st = STATUSES.find(s => s.id === m.s) || STATUSES[0];
+                return `<div class="ppl-item ${id === ME ? 'me' : ''}" onclick="${id === ME ? 'openStDrawer()' : ''}">
+      <div class="ppl-av">${m.e}</div>
+      <div class="ppl-info">
+        <b>${m.n}${id === ME ? ' (我)' : ''}</b>
+        ${m.note ? `<div class="ppl-note">💬 ${m.note}</div>` : ''}
+      </div>
+      <div class="ppl-st ${st.c}">${st.e} ${st.l}</div>
+    </div>`;
+            }).join('');
+        }
+
+        // ===== 首頁 =====
+        function rHome() {
+            const ts = DB.t || {}, sh = DB.s || {}, iv = DB.v || {};
+            const myT = Object.keys(ts).filter(i => ts[i].to === ME && !ts[i].done);
+            const buyC = Object.keys(sh).filter(i => !sh[i].done).length;
+            const lowC = Object.keys(iv).filter(i => iv[i].q <= (iv[i].alert || 1)).length;
+            const me = DB.m[ME];
+
+            return `
+    <div class="sec-t">嗨 ${me.n} 👋</div>
+    ${myT.length ? `<div class="card hl" onclick="go('task')" style="cursor:pointer">
+      <div style="font-weight:900;font-size:16px">📬 你有 ${myT.length} 個新委託！</div>
+      <div style="font-size:12px;color:var(--sub);margin-top:4px">家人拜託你的事，快去看看 →</div>
+    </div>`: ''}
+    ${lowC ? `<div class="card warn" onclick="go('inv')" style="cursor:pointer">
+      <div style="font-weight:900;font-size:15px">⚠️ ${lowC} 項物資快用完了</div>
+      <div style="font-size:12px;color:var(--sub);margin-top:4px">去庫存頁看看該補什麼貨</div>
+    </div>`: ''}
+    ${buyC ? `<div class="card" onclick="go('buy')" style="cursor:pointer">
+      <div style="font-weight:900;font-size:15px">🛒 還有 ${buyC} 件東西要買</div>
+      <div style="font-size:12px;color:var(--sub);margin-top:4px">出門前看一下採買清單</div>
+    </div>`: ''}
+    ${!myT.length && !lowC && !buyC ? `<div class="card purple" style="text-align:center;padding:30px">
+      <div style="font-size:36px;margin-bottom:8px">☀️</div>
+      <div style="font-weight:900;font-size:17px">家裡一切安好！</div>
+    </div>`: ''}
+    <div class="sec-t">快速操作</div>
+    <div class="card" onclick="go('task')" style="cursor:pointer;display:flex;align-items:center;gap:14px">
+      <div style="width:44px;height:44px;background:var(--priL);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">✋</div>
+      <div><div style="font-weight:900">請家人幫幫忙</div><div style="font-size:11px;color:var(--sub)">指派事項給家中某人</div></div>
+    </div>
+    <div class="card" onclick="go('buy')" style="cursor:pointer;display:flex;align-items:center;gap:14px">
+      <div style="width:44px;height:44px;background:var(--orgL);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">🛒</div>
+      <div><div style="font-weight:900">記下要買的東西</div><div style="font-size:11px;color:var(--sub)">全家人共用的願望清單</div></div>
+    </div>`;
+        }
+
+        // ===== 託付 =====
+        function rTask() {
+            const ms = DB.m || {}, ts = DB.t || {};
+            if (!TGT || !ms[TGT]) TGT = Object.keys(ms).find(i => i !== ME) || ME;
+            const my = Object.keys(ts).filter(i => ts[i].to === ME && !ts[i].done);
+            const ot = Object.keys(ts).filter(i => ts[i].to !== ME && !ts[i].done);
+
+            return `
+    <div class="sec-t">請家人幫忙 ✉️</div>
+    <div class="card">
+      <div class="inp-bar"><input id="tI" placeholder="例如：幫我領包裹"><button onclick="sendTask()">指派</button></div>
+      <div style="font-size:11px;font-weight:800;color:var(--sub);margin-bottom:6px">指派給誰？</div>
+      <div class="pick-row">${Object.keys(ms).map(id => `<div class="pk ${TGT === id ? 'on' : ''}" onclick="TGT='${id}';render()">${ms[id].e} ${ms[id].n}</div>`).join('')}</div>
+    </div>
+
+    ${my.length ? `<div class="sec-t">🚨 指派給我 <span class="num">${my.length}</span></div>` : ''}
+    ${my.map(id => {
+                const t = ts[id];
+                return `<div class="card hl">
+        <div class="task-body">
+          <div class="task-info">
+            <div class="tt">${t.tt}</div>
+            <div class="tm">${ms[t.fr] ? ms[t.fr].n : ''} 拜託的</div>
+            ${t.reply ? `<div class="task-reply"><b>你的回覆：</b>${t.reply}</div>` : ''}
+          </div>
+          <button class="btn-done" onclick="doneTask('${id}')">完成 ✓</button>
+        </div>
+        <button class="btn-reply" onclick="openReply('${id}')">💬 回覆（如：今天不行）</button>
+      </div>`;
+            }).join('')}
+
+    ${ot.length ? `<div class="sec-t">🕒 家人的任務</div>` : ''}
+    ${ot.map(id => {
+                const t = ts[id];
+                return `<div class="card" style="opacity:.65">
+        <div style="font-weight:900;font-size:14px">${t.tt}</div>
+        <div style="font-size:11px;color:var(--sub);margin-top:3px">${ms[t.to] ? ms[t.to].n : ''} 負責中</div>
+        ${t.reply ? `<div class="task-reply"><b>${ms[t.to] ? ms[t.to].n : ''}：</b>${t.reply}</div>` : ''}
+      </div>`;
+            }).join('')}
+
+    ${!Object.keys(ts).length ? '<div style="text-align:center;color:var(--dim);padding:40px">還沒有任何委託 ✋</div>' : ''}`;
+        }
+
+        // ===== 採買 =====
+        function rBuy() {
+            const sh = DB.s || {}, ms = DB.m || {};
+            const pend = Object.keys(sh).filter(i => !sh[i].done);
+            const done = Object.keys(sh).filter(i => sh[i].done);
+
+            return `
+    <div class="sec-t">採買清單 🛒</div>
+    <div class="card">
+      <div class="inp-bar"><input id="bI" placeholder="想買什麼？（番茄、膠帶...）"><button onclick="addBuy()">加入</button></div>
+    </div>
+    ${pend.map(id => `<div class="card"><div class="buy-item">
+      <div class="buy-info"><div class="bn">${sh[id].n}</div><div class="bm">${ms[sh[id].by] ? ms[sh[id].by].n : ''} 新增</div></div>
+      <button class="btn-bought" onclick="buyDone('${id}')">✓ 已買到</button>
+    </div></div>`).join('')}
+    ${!pend.length ? '<div style="text-align:center;color:var(--dim);padding:40px">🎉 沒東西要買！</div>' : ''}
+    ${done.length ? `<details style="margin-top:15px"><summary style="font-size:12px;color:var(--dim);font-weight:800;cursor:pointer">已購買 (${done.length})</summary>
+      ${done.slice(-5).reverse().map(id => `<div class="card" style="opacity:.3"><div style="text-decoration:line-through;font-size:13px">${sh[id].n}</div></div>`).join('')}
+    </details>`: ''}`;
+        }
+
+        // ===== 庫存 =====
+        function rInv() {
+            const iv = DB.v || {}, ids = Object.keys(iv);
+            return `
+    <div class="sec-t">家中庫存 📦</div>
+    <div class="card">
+      <div style="display:flex;gap:8px">
+        <input id="ivN" placeholder="物品名稱" style="flex:2;border:2px solid var(--bdr);padding:12px;border-radius:14px">
+        <input type="number" id="ivQ" value="1" min="0" style="flex:1;text-align:center;border:2px solid var(--bdr);border-radius:14px;padding:12px">
+        <button onclick="addInv()" style="padding:0 16px;background:var(--pri);color:#fff;border-radius:14px;font-weight:900;white-space:nowrap">追蹤</button>
+      </div>
+    </div>
+    <div class="inv-grid">${ids.map(id => {
+                const it = iv[id], al = it.alert || 1, low = it.q <= al && it.q > 0, zero = it.q <= 0;
+                return `<div class="inv-card ${zero ? 'zero' : low ? 'low' : ''}" onclick="openInvEdit('${id}')">
+        <div class="inv-nm">${it.n}</div>
+        <div class="inv-ctrl">
+          <button onclick="event.stopPropagation();chgInv('${id}',-1)">−</button>
+          <div class="inv-num" style="color:${zero ? 'var(--red)' : low ? 'var(--org)' : 'var(--txt)'}">${it.q}</div>
+          <button onclick="event.stopPropagation();chgInv('${id}',1)">+</button>
+        </div>
+        ${zero ? '<div class="inv-tag" style="background:var(--redL);color:var(--red)">❌ 已用完</div>' : low ? '<div class="inv-tag" style="background:var(--orgL);color:var(--org)">⚠️ 快沒了</div>' : '<div class="inv-tag" style="background:var(--grnL);color:var(--grn)">✓ 充足</div>'}
+        <div class="inv-alert">低於 ${al} 時提醒</div>
+        ${zero || low ? `<div class="inv-actions"><button onclick="event.stopPropagation();inv2buy('${id}')" style="background:var(--org);color:#fff">🛒 加入採買</button></div>` : ''}
+      </div>`;
+            }).join('')}</div>
+    ${!ids.length ? '<div style="text-align:center;color:var(--dim);padding:40px">📦 還沒追蹤任何物品<br>新增日常用品開始管理吧</div>' : ''}`;
+        }
+
+        // ===== 操作邏輯 =====
+        function sendTask() {
+            const v = document.getElementById('tI').value.trim(); if (!v) return;
+            if (!DB.t) DB.t = {};
+            DB.t['t' + Date.now()] = { tt: v, fr: ME, to: TGT, done: false, reply: '' };
+            save(DB); toast('已指派！✉️');
+        }
+        function doneTask(id) { DB.t[id].done = true; save(DB); toast('完成！🎉'); }
+
+        function addBuy() {
+            const v = document.getElementById('bI').value.trim(); if (!v) return;
+            if (!DB.s) DB.s = {};
+            DB.s['s' + Date.now()] = { n: v, by: ME, done: false };
+            save(DB); toast('已加入清單！');
+        }
+        function buyDone(id) {
+            const item = DB.s[id]; item.done = true;
+            if (!DB.v) DB.v = {};
+            const exists = Object.keys(DB.v).find(k => DB.v[k].n === item.n);
+            if (exists) DB.v[exists].q += 1;
+            else DB.v['v' + Date.now()] = { n: item.n, q: 1, alert: 1 };
+            save(DB); toast('✓ ' + item.n + ' 已轉入庫存！');
+        }
+
+        function addInv() {
+            const n = document.getElementById('ivN').value.trim(), q = parseInt(document.getElementById('ivQ').value) || 1;
+            if (!n) return;
+            if (!DB.v) DB.v = {};
+            DB.v['v' + Date.now()] = { n, q, alert: 1 };
+            save(DB); toast('開始追蹤 ' + n);
+        }
+        function chgInv(id, d) { DB.v[id].q = Math.max(0, DB.v[id].q + d); save(DB); }
+        function inv2buy(id) {
+            if (!DB.s) DB.s = {};
+            DB.s['s' + Date.now()] = { n: DB.v[id].n, by: ME, done: false };
+            save(DB); toast(DB.v[id].n + ' 已加入採買清單！');
+        }
+
+        // ===== 狀態抽屜 =====
+        function openStDrawer() {
+            const me = DB.m[ME];
+            document.getElementById('stGrid').innerHTML = STATUSES.map(s =>
+                `<div class="st-cell ${me.s === s.id ? 'on' : ''}" onclick="this.parentNode.querySelectorAll('.st-cell').forEach(x=>x.classList.remove('on'));this.classList.add('on');this.dataset.sid='${s.id}';" data-sid="${s.id}">
+      <span class="se">${s.e}</span><span class="sl">${s.l}</span>
+    </div>`).join('');
+            document.getElementById('stNote').value = me.note || '';
+            document.getElementById('drwSt').classList.add('on');
+        }
+        function saveStatus() {
+            const active = document.querySelector('#stGrid .st-cell.on');
+            if (active) DB.m[ME].s = active.dataset.sid;
+            DB.m[ME].note = document.getElementById('stNote').value.trim();
+            save(DB); closeDrw('drwSt'); toast('狀態已更新！');
+        }
+
+        // ===== 回覆抽屜 =====
+        function openReply(tid) {
+            replyTid = tid;
+            document.getElementById('replyTitle').textContent = DB.t[tid].tt;
+            document.getElementById('quickReplies').innerHTML = QUICK_REPLIES.map(r =>
+                `<button onclick="document.getElementById('replyText').value='${r}'" style="padding:8px 14px;border-radius:12px;background:var(--bg);font-size:12px;font-weight:800;border:none">${r}</button>`
+            ).join('');
+            document.getElementById('replyText').value = DB.t[tid].reply || '';
+            document.getElementById('drwReply').classList.add('on');
+        }
+        function sendReply() {
+            const v = document.getElementById('replyText').value.trim();
+            if (!v) return;
+            DB.t[replyTid].reply = v;
+            save(DB); closeDrw('drwReply'); toast('已回覆！');
+        }
+
+        // ===== 庫存編輯抽屜 =====
+        function openInvEdit(id) {
+            editInvId = id;
+            const it = DB.v[id];
+            document.getElementById('invEditBody').innerHTML = `
+    <div style="margin-bottom:15px">
+      <label style="font-size:12px;font-weight:800;color:var(--sub);display:block;margin-bottom:6px">物品名稱</label>
+      <input id="editInvN" value="${it.n}" style="width:100%;border:2px solid var(--bdr);padding:14px;border-radius:14px;font-size:15px;font-weight:800">
+    </div>
+    <div style="margin-bottom:15px">
+      <label style="font-size:12px;font-weight:800;color:var(--sub);display:block;margin-bottom:6px">目前數量</label>
+      <input type="number" id="editInvQ" value="${it.q}" style="width:100%;border:2px solid var(--bdr);padding:14px;border-radius:14px;font-size:15px;font-weight:800;text-align:center">
+    </div>
+    <div>
+      <label style="font-size:12px;font-weight:800;color:var(--sub);display:block;margin-bottom:6px">低於幾個時提醒我？</label>
+      <input type="number" id="editInvA" value="${it.alert || 1}" min="0" style="width:100%;border:2px solid var(--bdr);padding:14px;border-radius:14px;font-size:15px;font-weight:800;text-align:center">
+    </div>`;
+            document.getElementById('drwInv').classList.add('on');
+        }
+        function saveInvEdit() {
+            DB.v[editInvId].n = document.getElementById('editInvN').value;
+            DB.v[editInvId].q = parseInt(document.getElementById('editInvQ').value) || 0;
+            DB.v[editInvId].alert = parseInt(document.getElementById('editInvA').value) || 1;
+            save(DB); closeDrw('drwInv'); toast('已更新！');
+        }
+        function deleteInv() {
+            delete DB.v[editInvId];
+            save(DB); closeDrw('drwInv'); toast('已刪除');
+        }
+
+        function closeDrw(id) { document.getElementById(id).classList.remove('on'); }
+
+        // ===== 分享連結 =====
+        function shareLink() {
+            const base = location.href.split('?')[0];
+            const url = base + '?join=' + KEY;
+            if (navigator.share) {
+                navigator.share({ title: DB.name + ' - HomeSync 家庭管家', text: '加入我們的家庭空間！', url });
+            } else {
+                navigator.clipboard.writeText(url).then(() => toast('🔗 連結已複製，傳給家人吧！'));
+            }
+        }
+
+        // ===== 通知紅點 =====
+        function dots() {
+            const ts = DB.t || {}, sh = DB.s || {}, iv = DB.v || {};
+            const c1 = Object.keys(ts).filter(i => ts[i].to === ME && !ts[i].done).length;
+            const c2 = Object.keys(sh).filter(i => !sh[i].done).length;
+            const c3 = Object.keys(iv).filter(i => iv[i].q <= (iv[i].alert || 1)).length;
+            setDot('dT', c1); setDot('dB', c2); setDot('dI', c3);
+        }
+        function setDot(id, c) { const d = document.getElementById(id); d.style.display = c > 0 ? 'flex' : 'none'; d.textContent = c; }
+
+        function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.style.opacity = 1; setTimeout(() => t.style.opacity = 0, 2500); }
+    </script>
+</body>
+
+</html>
