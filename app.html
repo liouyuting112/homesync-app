@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HomeSync 家庭管家 | 終極 P2P 連動版 V14</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+    <style>
+        /* 暗黑紫星空主題 - 確保您看到這個顏色代表已經升級到 V14！ */
+        :root {
+            --pri: #8b5cf6;
+            --pri-bg: #f3e8ff;
+            --bg: #f8fafc;
+            --w: #fff;
+            --txt: #0f172a;
+            --sub: #64748b;
+            --grn: #10b981;
+            --red: #ef4444;
+            --rad: 28px;
+            --sh: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: #e2e8f0;
+            color: var(--txt);
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .shell {
+            width: 100%;
+            max-width: 440px;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            min-height: 100vh;
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.1);
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            padding: 40px 25px;
+            max-width: 440px;
+            margin: 0 auto;
+            transition: 0.3s;
+        }
+
+        .overlay.hide {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(30px);
+        }
+
+        .step {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .step.active {
+            display: flex;
+        }
+
+        .overlay h1 {
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--pri);
+            margin-bottom: 15px;
+        }
+
+        .overlay p {
+            color: var(--sub);
+            font-size: 15px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .inp-v {
+            width: 100%;
+            border: 3px solid #f1f5f9;
+            background: #f8fafc;
+            padding: 22px;
+            border-radius: 24px;
+            font-size: 19px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 25px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .inp-v:focus {
+            border-color: var(--pri);
+            background: #fff;
+            box-shadow: 0 0 0 5px var(--pri-bg);
+        }
+
+        .btn-v {
+            width: 100%;
+            padding: 22px;
+            border-radius: 100px;
+            background: var(--pri);
+            color: #fff;
+            font-size: 19px;
+            font-weight: 900;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 15px 30px rgba(139, 92, 246, 0.3);
+            transition: 0.2s;
+        }
+
+        .role-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+            max-height: 40vh;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .role-i {
+            background: #f8fafc;
+            border: 3px solid #f1f5f9;
+            border-radius: 28px;
+            padding: 30px 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .role-i.on {
+            border-color: var(--pri);
+            background: var(--pri-bg);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        .role-i .em {
+            font-size: 50px;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .role-i b {
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        .add-bar {
+            background: #f1f5f9;
+            padding: 25px;
+            border-radius: 30px;
+            width: 100%;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .add-bar label {
+            display: block;
+            font-size: 12px;
+            font-weight: 900;
+            color: var(--sub);
+            margin-bottom: 10px;
+            margin-left: 5px;
+        }
+
+        .inp-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .inp-row input {
+            flex: 1;
+            border: none;
+            padding: 18px;
+            border-radius: 18px;
+            font-weight: 800;
+            font-size: 16px;
+            outline: none;
+        }
+
+        .inp-row button {
+            background: var(--pri);
+            color: #fff;
+            border: none;
+            padding: 0 25px;
+            border-radius: 18px;
+            font-weight: 900;
+        }
+
+        #app {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .top {
+            padding: 35px 20px 25px;
+            background: #fff;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .top-r {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .top h2 {
+            font-weight: 900;
+            color: var(--pri);
+            font-size: 28px;
+        }
+
+        .tag-sync {
+            font-size: 10px;
+            color: var(--grn);
+            background: #d1fae5;
+            padding: 5px 12px;
+            border-radius: 100px;
+            font-weight: 900;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .tag-sync.offline {
+            color: var(--red);
+            background: #fee2e2;
+        }
+
+        .btn-share {
+            background: #fbbf24;
+            color: #92400e;
+            padding: 12px 20px;
+            border-radius: 18px;
+            font-size: 13px;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .wall {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .p-item {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 18px 24px;
+            background: #f8fafc;
+            border-radius: 25px;
+            border: 2.5px solid transparent;
+            transition: 0.3s;
+        }
+
+        .p-item.me {
+            background: var(--pri-bg);
+            border-color: rgba(139, 92, 246, 0.15);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+        }
+
+        .p-av {
+            width: 52px;
+            height: 52px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--sub);
+            padding: 40px;
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 440px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            padding: 15px 0 35px;
+            z-index: 500;
+        }
+
+        .nav-i {
+            flex: 1;
+            text-align: center;
+            color: var(--sub);
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .nav-i.on {
+            color: var(--pri);
+        }
+
+        .nav-i .ic {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 130px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #fff;
+            padding: 14px 35px;
+            border-radius: 60px;
+            font-size: 15px;
+            font-weight: 800;
+            opacity: 0;
+            transition: 0.3s;
+            z-index: 10000;
+        }
+
+        .btn-reset {
+            position: absolute;
+            bottom: 40px;
+            right: 20px;
+            font-size: 11px;
+            color: var(--sub);
+            background: none;
+            border: none;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="shell">
+        <div class="overlay" id="ov-wall">
+            <div class="step" id="st-home">
+                <div style="font-size:75px; margin-bottom:20px">🌟</div>
+                <h1>建立專屬家</h1>
+                <p>這是最新的高速通道版<br>請先為家庭空間命名</p>
+                <input class="inp-v" id="in-f-nm" placeholder="家庭名稱（如：幸福家）" maxlength="12">
+                <button class="btn-v" id="btn-create" onclick="doMakeHome()">啟動連線 ✨</button>
+            </div>
+
+            <div class="step" id="st-who">
+                <h1 id="who-title">我是誰？</h1>
+                <p>請在下方「新增」並點選你的大頭貼</p>
+                <div class="role-grid" id="grid-ui"></div>
+                <div class="add-bar">
+                    <label>1. 輸入名字並加入：</label>
+                    <div class="inp-row">
+                        <input id="in-m-nm" placeholder="例如: 媽媽" maxlength="6">
+                        <button onclick="doAddM()">加入</button>
+                    </div>
+                </div>
+                <button class="btn-v" id="btn-final" disabled onclick="doFinalEnter()">2. 點擊頭像後進入 ✨</button>
+                <button class="btn-reset" onclick="hardReset()">清除舊資料重來</button>
+            </div>
+        </div>
+
+        <div id="app">
+            <header class="top">
+                <div class="top-r">
+                    <div>
+                        <h2 id="top-title">HomeSync</h2>
+                        <div class="tag-sync" id="sync-status">● 實時雲端連動中</div>
+                    </div>
+                    <div class="btn-share" onclick="doShare()">🔗 分享給家人</div>
+                </div>
+                <div class="wall" id="wall-ui"></div>
+            </header>
+            <main class="main">
+                <div style="font-size:75px">🚀</div>
+                <h3 style="margin-top:20px">已開啟星頻同步</h3>
+                <p style="margin-top:10px; font-size:14px">這是不依賴特定伺服器的終極連動版</p>
+                <p style="font-size:14px">現在您與家人已成功建立通道。</p>
+            </main>
+            <nav class="nav">
+                <div class="nav-i on"><span class="ic">🏠</span>首頁</div>
+                <div class="nav-i"><span class="ic">✋</span>託付</div>
+                <div class="nav-i"><span class="ic">🛒</span>採買</div>
+                <div class="nav-i"><span class="ic">📦</span>庫存</div>
+            </nav>
+        </div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        // --- 去中心化 P2P 實時 MQTT 連動引擎 (V14) ---
+        let client;
+        let fK = '', fN = '', myID = '', memberMap = {};
+
+        try {
+            client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+
+            client.on('connect', () => {
+                const s = document.getElementById('sync-status');
+                if (s) {
+                    s.textContent = '● 已開啟高速連動';
+                    s.classList.remove('offline');
+                }
+                if (fK) {
+                    client.subscribe(`hs/v14/topic/${fK}`);
+                    client.publish(`hs/v14/topic/${fK}/ping`, "ping");
+                }
+            });
+
+            client.on('offline', () => {
+                const s = document.getElementById('sync-status');
+                if (s) {
+                    s.textContent = '● 斷線重連中...';
+                    s.classList.add('offline');
+                }
+            });
+
+            client.on('message', (topic, message) => {
+                if (topic.endsWith('/ping')) return;
+                try {
+                    const raw = message.toString();
+                    const safeKey = fK.substring(0, 16);
+                    const bytes = CryptoJS.AES.decrypt(raw, safeKey);
+                    const dec = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+
+                    // 合併名單，不覆蓋
+                    memberMap = { ...memberMap, ...(dec.m || {}) };
+                    fN = dec.n || '我們的家';
+
+                    const wt = document.getElementById('who-title');
+                    if (wt) wt.textContent = fN + " 是誰？";
+                    const tt = document.getElementById('top-title');
+                    if (tt) tt.textContent = fN;
+                    renderUI();
+                } catch (e) { console.log('解密忽略', e); }
+            });
+        } catch (e) { console.error("MQTT連線失敗", e); }
+
+        function syncCloud() {
+            try {
+                const safeKey = fK.substring(0, 16);
+                const dbObj = { n: fN, m: memberMap };
+                const enc = CryptoJS.AES.encrypt(JSON.stringify(dbObj), safeKey).toString();
+                if (client && client.connected) {
+                    client.publish(`hs/v14/topic/${fK}`, enc, { retain: true });
+                }
+            } catch (err) { console.error("發布失敗", err); }
+        }
+
+        (function lifecycle() {
+            const p = new URLSearchParams(window.location.search);
+            const join = p.get('join');
+            const saved = localStorage.getItem('hs_k_v14');
+
+            if (join) {
+                fK = join;
+                localStorage.setItem('hs_k_v14', fK);
+                if (client && client.connected) client.subscribe(`hs/v14/topic/${fK}`);
+                showStep('who');
+            } else if (saved) {
+                fK = saved;
+                myID = localStorage.getItem('hs_me_' + fK);
+                if (client && client.connected) client.subscribe(`hs/v14/topic/${fK}`);
+                if (myID) {
+                    const ov = document.getElementById('ov-wall');
+                    if (ov) ov.classList.add('hide');
+                    const app = document.getElementById('app');
+                    if (app) app.style.display = 'flex';
+                } else {
+                    showStep('who');
+                }
+            } else {
+                showStep('home');
+            }
+        })();
+
+        function showStep(s) {
+            document.querySelectorAll('.step').forEach(d => d.classList.remove('active'));
+            const st = document.getElementById('st-' + s);
+            if (st) st.classList.add('active');
+        }
+
+        function doMakeHome() {
+            const val = document.getElementById('in-f-nm').value.trim();
+            if (!val) return;
+            fN = val;
+            fK = 'HS' + Math.random().toString(36).substr(2, 12).toUpperCase();
+            localStorage.setItem('hs_k_v14', fK);
+            if (client && client.connected) client.subscribe(`hs/v14/topic/${fK}`);
+            syncCloud();
+            showStep('who');
+        }
+
+        function renderUI() {
+            const grid = document.getElementById('grid-ui');
+            if (grid) {
+                grid.innerHTML = Object.keys(memberMap).map(id => `
+            <div class="role-i ${myID == id ? 'on' : ''}" onclick="setMyID('${id}')">
+                <span class="em">${memberMap[id].e || '🙋'}</span>
+                <b>${memberMap[id].n}</b>
+            </div>
+        `).join('');
+            }
+
+            const wall = document.getElementById('wall-ui');
+            if (myID && wall) {
+                wall.innerHTML = Object.keys(memberMap).map(id => `
+            <div class="p-item ${id == myID ? 'me' : ''}">
+                <div class="p-av">${memberMap[id].e || '🙋'}</div>
+                <b>${memberMap[id].n}${id == myID ? ' (我)' : ''}</b>
+            </div>
+        `).join('');
+            }
+        }
+
+        function setMyID(id) {
+            myID = id;
+            renderUI();
+            const btn = document.getElementById('btn-final');
+            if (btn) btn.disabled = false;
+        }
+
+        function doAddM() {
+            const inp = document.getElementById('in-m-nm');
+            const n = inp.value.trim();
+            if (!n) return;
+            const mid = 'M' + Date.now();
+            memberMap[mid] = { n, e: '🙋' };
+
+            // 強制本地刷新
+            renderUI();
+            syncCloud();
+
+            inp.value = '';
+            toast('新增成功！請點選上方【' + n + '】的大頭貼進入');
+        }
+
+        function doFinalEnter() {
+            if (!myID) return;
+            localStorage.setItem('hs_me_' + fK, myID);
+            const ov = document.getElementById('ov-wall');
+            if (ov) ov.classList.add('hide');
+            const app = document.getElementById('app');
+            if (app) app.style.display = 'flex';
+            const tt = document.getElementById('top-title');
+            if (tt) tt.textContent = fN;
+            renderUI();
+        }
+
+        function doShare() {
+            const url = window.location.origin + window.location.pathname.replace('index.html', '') + 'app.html?join=' + fK;
+            navigator.clipboard.writeText(url).then(() => toast('🔗 連線網址已複製！'));
+        }
+
+        function hardReset() { localStorage.clear(); location.href = location.href.split('?')[0]; }
+        function toast(m) { const t = document.getElementById('toast'); if (!t) return; t.style.opacity = 1; t.textContent = m; setTimeout(() => t.style.opacity = 0, 2500); }
+    </script>
+</body>
+
+</html>
