@@ -12,16 +12,16 @@
 
     <style>
         :root {
-            --pri: #6366f1;
+            --pri: #6336f1;
             --pri-bg: #f5f6ff;
-            --bg: #f1f5f9;
+            --bg: #f8fafc;
             --w: #fff;
             --txt: #111827;
             --sub: #6b7280;
             --grn: #10b981;
             --red: #ef4444;
             --rad: 28px;
-            --sh: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+            --sh: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -48,10 +48,10 @@
             flex-direction: column;
             position: relative;
             min-height: 100vh;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.1);
         }
 
-        /* 全螢幕遮罩層 */
+        /* 遮罩 */
         .overlay {
             position: fixed;
             inset: 0;
@@ -60,9 +60,9 @@
             display: flex;
             flex-direction: column;
             padding: 40px 25px;
-            transition: 0.4s;
             max-width: 440px;
             margin: 0 auto;
+            transition: 0.3s;
         }
 
         .overlay.hide {
@@ -80,54 +80,56 @@
             text-align: center;
         }
 
-        .step.on {
+        .step.active {
             display: flex;
         }
 
         .overlay h1 {
-            font-size: 34px;
+            font-size: 36px;
             font-weight: 900;
             color: var(--pri);
-            margin-bottom: 8px;
+            margin-bottom: 15px;
         }
 
         .overlay p {
             color: var(--sub);
             font-size: 15px;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             line-height: 1.6;
         }
 
-        .inp-x {
+        .inp-v {
             width: 100%;
             border: 3px solid #f1f5f9;
             background: #f8fafc;
-            padding: 20px;
-            border-radius: 22px;
-            font-size: 18px;
+            padding: 22px;
+            border-radius: 24px;
+            font-size: 19px;
             font-weight: 800;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             outline: none;
             transition: 0.2s;
         }
 
-        .inp-x:focus {
+        .inp-v:focus {
             border-color: var(--pri);
             background: #fff;
+            box-shadow: 0 0 0 5px var(--pri-bg);
         }
 
-        .btn-x {
+        .btn-v {
             width: 100%;
-            padding: 20px;
+            padding: 22px;
             border-radius: 100px;
             background: var(--pri);
             color: #fff;
-            font-size: 18px;
+            font-size: 19px;
             font-weight: 900;
             border: none;
             cursor: pointer;
-            box-shadow: 0 12px 25px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 15px 30px rgba(99, 54, 241, 0.35);
+            transition: 0.2s;
         }
 
         /* 角色網格 */
@@ -137,44 +139,47 @@
             grid-template-columns: 1fr 1fr;
             gap: 15px;
             margin-bottom: 25px;
-            max-height: 35vh;
+            max-height: 40vh;
             overflow-y: auto;
-            padding: 5px;
+            padding: 10px;
         }
 
         .role-i {
-            background: #f8fafc;
+            background: #f9fafb;
             border: 3px solid #f1f5f9;
-            border-radius: 25px;
-            padding: 20px 10px;
+            border-radius: 28px;
+            padding: 30px 10px;
             cursor: pointer;
             text-align: center;
             transition: 0.2s;
+            position: relative;
         }
 
         .role-i.on {
             border-color: var(--pri);
             background: var(--pri-bg);
-            transform: scale(1.03);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
         }
 
         .role-i .em {
-            font-size: 40px;
+            font-size: 50px;
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
 
         .role-i b {
-            font-size: 15px;
+            font-size: 17px;
             font-weight: 900;
         }
 
-        .input-box {
+        .add-bar {
             background: #f1f5f9;
-            padding: 20px;
-            border-radius: 25px;
+            padding: 25px;
+            border-radius: 30px;
             width: 100%;
             margin-bottom: 20px;
+            text-align: left;
         }
 
         .inp-row {
@@ -185,9 +190,10 @@
         .inp-row input {
             flex: 1;
             border: none;
-            padding: 15px;
-            border-radius: 15px;
+            padding: 18px;
+            border-radius: 18px;
             font-weight: 800;
+            font-size: 16px;
             outline: none;
         }
 
@@ -195,12 +201,11 @@
             background: var(--pri);
             color: #fff;
             border: none;
-            padding: 0 20px;
-            border-radius: 15px;
+            padding: 0 25px;
+            border-radius: 18px;
             font-weight: 900;
         }
 
-        /* 主 App */
         #app {
             display: none;
             flex: 1;
@@ -208,88 +213,93 @@
         }
 
         .top {
-            padding: 30px 20px 20px;
+            padding: 35px 20px 25px;
             background: #fff;
             border-bottom: 1px solid #f1f5f9;
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
 
-        .top-row {
+        .top-r {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 20px;
         }
 
         .top h2 {
             font-weight: 900;
             color: var(--pri);
-            font-size: 26px;
+            font-size: 28px;
         }
 
-        .sync-tag {
+        .tag-sync {
             font-size: 10px;
             color: var(--grn);
             background: #d1fae5;
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 100px;
             font-weight: 900;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            margin-top: 5px;
+            gap: 5px;
+            margin-top: 8px;
         }
 
-        .share-btn {
-            background: #fcd34d;
+        .btn-share {
+            background: #fbbf24;
             color: #92400e;
-            padding: 10px 18px;
-            border-radius: 15px;
+            padding: 12px 20px;
+            border-radius: 18px;
             font-size: 13px;
             font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(252, 211, 77, 0.3);
-        }
-
-        .ppl-wall {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .ppl-i {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 15px 20px;
-            background: #f8fafc;
-            border-radius: 22px;
+            gap: 5px;
+        }
+
+        .wall {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 25px;
+        }
+
+        .p-item {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            padding: 18px 24px;
+            background: #f9fafb;
+            border-radius: 25px;
+            border: 2.5px solid transparent;
             transition: 0.3s;
         }
 
-        .ppl-i.me {
+        .p-item.me {
             background: var(--pri-bg);
-            border-left: 6px solid var(--pri);
+            border-color: rgba(99, 54, 241, 0.15);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
         }
 
-        .ppl-av {
-            width: 48px;
-            height: 48px;
+        .p-av {
+            width: 52px;
+            height: 52px;
             background: #fff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
-            box-shadow: var(--sh);
+            font-size: 28px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08);
         }
 
         .main {
             flex: 1;
-            padding: 30px 20px 140px;
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--sub);
+            padding: 40px;
         }
 
         .nav {
@@ -311,34 +321,46 @@
             flex: 1;
             text-align: center;
             color: var(--sub);
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 900;
         }
 
-        .nav-i.active {
+        .nav-i.on {
             color: var(--pri);
         }
 
         .nav-i .ic {
-            font-size: 26px;
+            font-size: 28px;
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
         #toast {
             position: fixed;
-            bottom: 120px;
+            bottom: 130px;
             left: 50%;
             transform: translateX(-50%);
             background: #1e293b;
             color: #fff;
-            padding: 12px 30px;
-            border-radius: 50px;
-            font-size: 14px;
+            padding: 14px 35px;
+            border-radius: 60px;
+            font-size: 15px;
             font-weight: 800;
             opacity: 0;
-            transition: .3s;
-            z-index: 9999;
+            transition: 0.3s;
+            z-index: 10000;
+        }
+
+        .btn-reset {
+            position: absolute;
+            bottom: 40px;
+            right: 20px;
+            font-size: 11px;
+            color: var(--sub);
+            background: none;
+            border: none;
+            text-decoration: underline;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -346,51 +368,53 @@
 <body>
 
     <div class="shell">
-        <!-- 引導流程 -->
-        <div class="overlay" id="ov">
-            <div class="step" id="st-n">
-                <div style="font-size:65px; margin-bottom:15px">🏰</div>
-                <h1>建立家庭</h1>
-                <p>歡迎使用 HomeSync！<br>請先為您的家庭空間取個名字。</p>
-                <input class="inp-x" id="in-f-n" placeholder="例如：亮亮家、幸福之家" maxlength="12">
-                <button class="btn-x" onclick="goStep2()">開始建立 ✨</button>
+        <!-- 引導流程牆 -->
+        <div class="overlay" id="ov-wall">
+            <!-- 步驟 1: 命名家 -->
+            <div class="step" id="st-home">
+                <div style="font-size:75px; margin-bottom:20px">🏡</div>
+                <h1>建立家庭網區</h1>
+                <p>第一步：請先為家庭空間命名</p>
+                <input class="inp-v" id="in-f-nm" placeholder="家庭名稱（如：我們家）" maxlength="12">
+                <button class="btn-v" onclick="doMakeHome()">開始建立空間 ✨</button>
             </div>
 
-            <div class="step" id="st-r">
-                <h1 id="r-title">我是誰？</h1>
-                <p>請建立或選擇您的身分，開始實時連動。</p>
-                <div class="role-grid" id="rg-render"></div>
-                <div class="input-box">
+            <!-- 步驟 2: 我是誰 -->
+            <div class="step" id="st-who">
+                <h1 id="who-title">我是誰？</h1>
+                <p>第二步：請新增或選取您的成員分身</p>
+                <div class="role-grid" id="grid-ui"></div>
+                <div class="add-bar">
                     <div class="inp-row">
-                        <input id="in-m-n" placeholder="輸入您的名字" maxlength="6">
-                        <button onclick="addM()">新增</button>
+                        <input id="in-m-nm" placeholder="您的名字 (例如: 爸爸)" maxlength="6">
+                        <button onclick="doAddM()">新增</button>
                     </div>
                 </div>
-                <button class="btn-x" id="btn-go" disabled onclick="bootApp()">確定是我，進入！ ✨</button>
+                <button class="btn-v" id="btn-final" disabled onclick="doFinalEnter()">確定是我，進入工具 ✨</button>
+                <button class="btn-reset" onclick="hardReset()">重設所有資料 (測試用)</button>
             </div>
         </div>
 
         <!-- 主 App -->
         <div id="app">
             <header class="top">
-                <div class="top-row">
+                <div class="top-r">
                     <div>
-                        <h2 id="top-f-n">HomeSync</h2>
-                        <div class="sync-tag">● 安全同步中</div>
+                        <h2 id="top-title">HomeSync</h2>
+                        <div class="tag-sync">● 已與全家人連動中</div>
                     </div>
-                    <div class="share-btn" onclick="copyLink()">🔗 分享與連動</div>
+                    <div class="btn-share" onclick="doShare()">🔗 分享與邀請</div>
                 </div>
-                <div class="ppl-wall" id="ppl-render"></div>
+                <div class="wall" id="wall-ui"></div>
             </header>
             <main class="main">
-                <div style="margin-top:60px">
-                    <div style="font-size:70px">💡</div>
-                    <h3 style="margin-top:20px">已與家人即時連動</h3>
-                    <p style="font-size:14px; color:var(--sub); margin-top:10px">您與家人的任何變動，雙方都會同步看見。</p>
-                </div>
+                <div style="font-size:75px">💡</div>
+                <h3 style="margin-top:20px">已開啟實時同步</h3>
+                <p style="margin-top:10px; font-size:14px">現在您與家人新增的任務</p>
+                <p style="font-size:14px">都會雙向自動出現。</p>
             </main>
             <nav class="nav">
-                <div class="nav-i active"><span class="ic">🏠</span>首頁</div>
+                <div class="nav-i on"><span class="ic">🏠</span>首頁</div>
                 <div class="nav-i"><span class="ic">✋</span>託付</div>
                 <div class="nav-i"><span class="ic">🛒</span>採買</div>
                 <div class="nav-i"><span class="ic">📦</span>庫存</div>
@@ -401,131 +425,136 @@
     <div id="toast"></div>
 
     <script>
-        // --- 絕對同步引擎 (V11) ---
-        const dbURL = "https://homesync-private-default-rtdb.firebaseio.com";
-        firebase.initializeApp({ databaseURL: dbURL });
+        // --- 家庭連動 V12：修正密鑰不一致與同步斷點 ---
+        const fbURL = "https://homesync-private-default-rtdb.firebaseio.com";
+        firebase.initializeApp({ databaseURL: fbURL });
         const rdb = firebase.database();
 
-        let famK = '', famN = '', meId = '', memberData = {};
+        let fK = '', fN = '', myID = '', memberMap = {};
 
-        (function init() {
-            const p = new URLSearchParams(location.search);
-            const joinCode = p.get('join');
-            const savedK = localStorage.getItem('hs_k_v11');
+        (function lifecycle() {
+            const p = new URLSearchParams(window.location.search);
+            const join = p.get('join');
+            const saved = localStorage.getItem('hs_k_v12');
 
-            if (joinCode) {
-                // 【家人模式】：直接同步對方的家
-                famK = joinCode;
-                localStorage.setItem('hs_k_v11', joinCode);
-                startSync();
-            } else if (savedK) {
-                // 【老用戶模式】
-                famK = savedK;
-                meId = localStorage.getItem('hs_me_' + famK);
-                startSync();
-                if (meId) {
-                    document.getElementById('ov').classList.add('hide');
+            if (join) {
+                // 【家人加入】：強制使用邀請碼
+                fK = join;
+                localStorage.setItem('hs_k_v12', fK);
+                startRealSync();
+            } else if (saved) {
+                // 【老用戶回歸】
+                fK = saved;
+                myID = localStorage.getItem('hs_me_' + fK);
+                startRealSync();
+                if (myID) {
+                    document.getElementById('ov-wall').classList.add('hide');
                     document.getElementById('app').style.display = 'flex';
                 }
             } else {
-                // 【新屋主模式】
-                showStep('n');
+                // 【第一人建立者】
+                showStep('home');
             }
         })();
 
         function showStep(s) {
-            document.querySelectorAll('.step').forEach(d => d.classList.remove('on'));
-            document.getElementById('st-' + s).classList.add('on');
+            document.querySelectorAll('.step').forEach(d => d.classList.remove('active'));
+            document.getElementById('st-' + s).classList.add('active');
         }
 
-        function startSync() {
+        function startRealSync() {
             // 1. 同步家名
-            rdb.ref(`hs/v11/${famK}/name`).on('value', s => {
-                famN = s.val() || '我們的家';
-                document.getElementById('top-f-n').textContent = famN;
-                document.getElementById('r-title').textContent = famN + " 是誰？";
+            rdb.ref(`hs/v12/${fK}/nm`).on('value', s => {
+                fN = s.val() || '我們的家';
+                document.getElementById('top-title').textContent = fN;
+                document.getElementById('who-title').textContent = fN + " 是誰？";
             });
 
-            // 2. 同步成員 (重點：修正 V10 的變數衝突)
-            rdb.ref(`hs/v11/${famK}/m`).on('value', snap => {
+            // 2. 同步成員 (重點：修正解密金鑰一致性)
+            rdb.ref(`hs/v12/${fK}/users`).on('value', snap => {
                 const data = snap.val() || {};
-                memberData = {}; // 清空並更新
+                memberMap = {};
                 Object.keys(data).forEach(id => {
                     try {
-                        const bytes = CryptoJS.AES.decrypt(data[id], famK);
-                        memberData[id] = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-                    } catch (e) { }
+                        // 使用 fK 的前 16 位作為極簡穩定金鑰
+                        const safeKey = fK.substring(0, 16);
+                        const bytes = CryptoJS.AES.decrypt(data[id], safeKey);
+                        memberMap[id] = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+                    } catch (e) { console.error("解密出錯"); }
                 });
-                renderAllUI();
+                renderUI();
             });
-            showStep('r');
+            showStep('who');
         }
 
-        function goStep2() {
-            const n = document.getElementById('in-f-n').value.trim();
-            if (!n) return;
-            famN = n;
-            famK = 'H' + Math.random().toString(36).substr(2, 9);
-            localStorage.setItem('hs_k_v11', famK);
-            rdb.ref(`hs/v11/${famK}/name`).set(famN);
-            startSync();
+        function doMakeHome() {
+            const val = document.getElementById('in-f-nm').value.trim();
+            if (!val) return;
+            fN = val;
+            // 生成極簡安全 ID，避免符號導致解密失敗
+            fK = 'HS' + Math.random().toString(36).substr(2, 10).toUpperCase();
+            localStorage.setItem('hs_k_v12', fK);
+            rdb.ref(`hs/v12/${fK}/nm`).set(fN);
+            startRealSync();
         }
 
-        function renderAllUI() {
-            // 渲染選擇清單
-            const grid = document.getElementById('rg-render');
-            grid.innerHTML = Object.keys(memberData).map(id => `
-        <div class="role-i ${meId == id ? 'on' : ''}" onclick="setMe('${id}')">
-            <span class="em">${memberData[id].e || '🙋'}</span>
-            <b>${memberData[id].n}</b>
+        function renderUI() {
+            // 渲染 STEP 2 選擇清單
+            const grid = document.getElementById('grid-ui');
+            grid.innerHTML = Object.keys(memberMap).map(id => `
+        <div class="role-i ${myID == id ? 'on' : ''}" onclick="setMyID('${id}')">
+            <span class="em">${memberMap[id].e || '🙋'}</span>
+            <b>${memberMap[id].n}</b>
         </div>
     `).join('');
 
-            // 渲染主 App 成員牆
-            const wall = document.getElementById('ppl-render');
-            if (meId && wall) {
-                wall.innerHTML = Object.keys(memberData).map(id => `
-            <div class="ppl-i ${id == meId ? 'me' : ''}">
-                <div class="ppl-av">${memberData[id].e || '🙋'}</div>
-                <b>${memberData[id].n}${id == meId ? ' (我)' : ''}</b>
+            // 渲染主 App 牆面
+            const wall = document.getElementById('wall-ui');
+            if (myID && wall) {
+                wall.innerHTML = Object.keys(memberMap).map(id => `
+            <div class="p-item ${id == myID ? 'me' : ''}">
+                <div class="p-av">${memberMap[id].e || '🙋'}</div>
+                <b>${memberMap[id].n}${id == myID ? ' (我)' : ''}</b>
             </div>
         `).join('');
             }
         }
 
-        function setMe(id) {
-            meId = id;
-            renderAllUI();
-            document.getElementById('btn-go').disabled = false;
+        function setMyID(id) {
+            myID = id;
+            renderUI();
+            document.getElementById('btn-final').disabled = false;
         }
 
-        function addM() {
-            const n = document.getElementById('in-m-n').value.trim();
+        function doAddM() {
+            const n = document.getElementById('in-m-nm').value.trim();
             if (!n) return;
             const mid = 'M' + Date.now();
-            const mObj = { n, e: '🙋', ts: Date.now() };
-            const enc = CryptoJS.AES.encrypt(JSON.stringify(mObj), famK).toString();
+            const obj = { n, e: '🙋' };
+            const safeKey = fK.substring(0, 16);
+            const enc = CryptoJS.AES.encrypt(JSON.stringify(obj), safeKey).toString();
 
-            // 分項寫入，絕不覆蓋別人
-            rdb.ref(`hs/v11/${famK}/m/${mid}`).set(enc);
-            document.getElementById('in-m-n').value = '';
-            toast('新增成功！請選取您的名字進入');
+            // 核心修復：立即寫入 Firebase
+            rdb.ref(`hs/v12/${fK}/users/${mid}`).set(enc);
+            document.getElementById('in-m-nm').value = '';
+            toast('成功！請在清單中選取您的名字進入');
         }
 
-        function bootApp() {
-            if (!meId) return;
-            localStorage.setItem('hs_me_' + famK, meId);
-            document.getElementById('ov').classList.add('hide');
+        function doFinalEnter() {
+            if (!myID) return;
+            localStorage.setItem('hs_me_' + fK, myID);
+            document.getElementById('ov-wall').classList.add('hide');
             document.getElementById('app').style.display = 'flex';
-            renderAllUI();
+            renderUI();
         }
 
-        function copyLink() {
-            const url = window.location.href.split('?')[0] + '?join=' + famK;
-            navigator.clipboard.writeText(url).then(() => toast('🔗 連動連結已複製！傳給家人吧'));
+        function doShare() {
+            const url = window.location.origin + window.location.pathname + '?join=' + fK;
+            navigator.clipboard.writeText(url).then(() => toast('🔗 已複製連動連結！快傳給家人吧'));
         }
 
-        function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.style.opacity = 1; setTimeout(() => t.style.opacity = 0, 2500); }
+        function hardReset() { localStorage.clear(); location.href = location.pathname; }
+        function toast(m) { const t = document.getElementById('toast'); t.style.opacity = 1; t.textContent = m; setTimeout(() => t.style.opacity = 0, 2500); }
     </script>
 </body>
 
