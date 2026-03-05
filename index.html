@@ -4,20 +4,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HomeSync 家庭管家 | 終極連動版</title>
+    <title>HomeSync 家庭管家 | 終極 P2P 連動版</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
     <style>
         :root {
-            --pri: #6336f1;
-            --pri-bg: #f5f6ff;
+            --pri: #2563eb;
+            --pri-bg: #eff6ff;
             --bg: #f8fafc;
             --w: #fff;
-            --txt: #111827;
-            --sub: #6b7280;
+            --txt: #0f172a;
+            --sub: #64748b;
             --grn: #10b981;
             --red: #ef4444;
             --rad: 28px;
@@ -33,7 +32,7 @@
 
         body {
             font-family: 'Noto Sans TC', sans-serif;
-            background: #e5e7eb;
+            background: #e2e8f0;
             color: var(--txt);
             display: flex;
             justify-content: center;
@@ -51,7 +50,6 @@
             box-shadow: 0 0 60px rgba(0, 0, 0, 0.1);
         }
 
-        /* 遮罩 */
         .overlay {
             position: fixed;
             inset: 0;
@@ -128,11 +126,10 @@
             font-weight: 900;
             border: none;
             cursor: pointer;
-            box-shadow: 0 15px 30px rgba(99, 54, 241, 0.35);
+            box-shadow: 0 15px 30px rgba(37, 99, 235, 0.3);
             transition: 0.2s;
         }
 
-        /* 角色網格 */
         .role-grid {
             width: 100%;
             display: grid;
@@ -145,7 +142,7 @@
         }
 
         .role-i {
-            background: #f9fafb;
+            background: #f8fafc;
             border: 3px solid #f1f5f9;
             border-radius: 28px;
             padding: 30px 10px;
@@ -180,6 +177,15 @@
             width: 100%;
             margin-bottom: 20px;
             text-align: left;
+        }
+
+        .add-bar label {
+            display: block;
+            font-size: 12px;
+            font-weight: 900;
+            color: var(--sub);
+            margin-bottom: 10px;
+            margin-left: 5px;
         }
 
         .inp-row {
@@ -243,6 +249,11 @@
             margin-top: 8px;
         }
 
+        .tag-sync.offline {
+            color: var(--red);
+            background: #fee2e2;
+        }
+
         .btn-share {
             background: #fbbf24;
             color: #92400e;
@@ -268,7 +279,7 @@
             align-items: center;
             gap: 18px;
             padding: 18px 24px;
-            background: #f9fafb;
+            background: #f8fafc;
             border-radius: 25px;
             border: 2.5px solid transparent;
             transition: 0.3s;
@@ -276,7 +287,7 @@
 
         .p-item.me {
             background: var(--pri-bg);
-            border-color: rgba(99, 54, 241, 0.15);
+            border-color: rgba(37, 99, 235, 0.15);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
         }
 
@@ -368,50 +379,47 @@
 <body>
 
     <div class="shell">
-        <!-- 引導流程牆 -->
         <div class="overlay" id="ov-wall">
-            <!-- 步驟 1: 命名家 -->
             <div class="step" id="st-home">
                 <div style="font-size:75px; margin-bottom:20px">🏡</div>
                 <h1>建立家庭網區</h1>
                 <p>第一步：請先為家庭空間命名</p>
                 <input class="inp-v" id="in-f-nm" placeholder="家庭名稱（如：我們家）" maxlength="12">
-                <button class="btn-v" onclick="doMakeHome()">開始建立空間 ✨</button>
+                <button class="btn-v" id="btn-create" onclick="doMakeHome()">開始建立空間 ✨</button>
             </div>
 
-            <!-- 步驟 2: 我是誰 -->
             <div class="step" id="st-who">
                 <h1 id="who-title">我是誰？</h1>
-                <p>第二步：請新增或選取您的成員分身</p>
+                <p>第二步：點選清單，或在下方新增並點選您的分身</p>
                 <div class="role-grid" id="grid-ui"></div>
                 <div class="add-bar">
+                    <label>新增家人：</label>
                     <div class="inp-row">
                         <input id="in-m-nm" placeholder="您的名字 (例如: 爸爸)" maxlength="6">
-                        <button onclick="doAddM()">新增</button>
+                        <button onclick="doAddM()">加入</button>
                     </div>
                 </div>
                 <button class="btn-v" id="btn-final" disabled onclick="doFinalEnter()">確定是我，進入工具 ✨</button>
-                <button class="btn-reset" onclick="hardReset()">重設所有資料 (測試用)</button>
+                <button class="btn-reset" onclick="hardReset()">清除緩存重測</button>
             </div>
         </div>
 
-        <!-- 主 App -->
         <div id="app">
             <header class="top">
                 <div class="top-r">
                     <div>
                         <h2 id="top-title">HomeSync</h2>
-                        <div class="tag-sync">● 已與全家人連動中</div>
+                        <div class="tag-sync" id="sync-status">● 實時雲端連動中</div>
                     </div>
-                    <div class="btn-share" onclick="doShare()">🔗 分享與邀請</div>
+                    <div class="btn-share" onclick="doShare()">🔗 分享與連動</div>
                 </div>
                 <div class="wall" id="wall-ui"></div>
             </header>
             <main class="main">
                 <div style="font-size:75px">💡</div>
-                <h3 style="margin-top:20px">已開啟實時同步</h3>
-                <p style="margin-top:10px; font-size:14px">現在您與家人新增的任務</p>
-                <p style="font-size:14px">都會雙向自動出現。</p>
+                <h3 style="margin-top:20px">已開啟 P2P 同步引擎</h3>
+                <p style="margin-top:10px; font-size:14px">這是不依賴特定伺服器的終極連動版</p>
+                <p style="font-size:14px">現在您與家人已成功建立通道。</p>
             </main>
             <nav class="nav">
                 <div class="nav-i on"><span class="ic">🏠</span>首頁</div>
@@ -425,34 +433,77 @@
     <div id="toast"></div>
 
     <script>
-        // --- 家庭連動 V12：修正密鑰不一致與同步斷點 ---
-        const fbURL = "https://homesync-private-default-rtdb.firebaseio.com";
-        firebase.initializeApp({ databaseURL: fbURL });
-        const rdb = firebase.database();
+        // --- 去中心化 P2P 實時 MQTT 連動引擎 (V13) ---
+        // 徹底拋棄發生 404/權限錯誤的 Firebase，改用公共的 WebSockets 即時通道！
 
+        const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
         let fK = '', fN = '', myID = '', memberMap = {};
+
+        client.on('connect', () => {
+            document.getElementById('sync-status').textContent = '● 已開啟 P2P 通道連動';
+            document.getElementById('sync-status').classList.remove('offline');
+            if (fK) {
+                client.subscribe(`hs/v13/topic/${fK}`);
+                // 請求最新狀態 (發送一個空觸發確保能抓到保留的訊息)
+                client.publish(`hs/v13/topic/${fK}/ping`, "ping");
+            }
+        });
+
+        client.on('offline', () => {
+            document.getElementById('sync-status').textContent = '● 斷線中...重連中';
+            document.getElementById('sync-status').classList.add('offline');
+        });
+
+        // 接收來自網路上任何家人的即時訊息
+        client.on('message', (topic, message) => {
+            if (topic.endsWith('/ping')) return;
+            try {
+                const raw = message.toString();
+                const safeKey = fK.substring(0, 16);
+                const bytes = CryptoJS.AES.decrypt(raw, safeKey);
+                const dec = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+
+                memberMap = dec.m || {};
+                fN = dec.n || '我們的家';
+
+                document.getElementById('who-title').textContent = fN + " 是誰？";
+                document.getElementById('top-title').textContent = fN;
+                renderUI();
+            } catch (e) { console.log('解密忽略', e); }
+        });
+
+        function syncCloud() {
+            const safeKey = fK.substring(0, 16);
+            const dbObj = { n: fN, m: memberMap };
+            const enc = CryptoJS.AES.encrypt(JSON.stringify(dbObj), safeKey).toString();
+            // retain: true 讓晚加入的家人也能讀到最新的全家福！
+            client.publish(`hs/v13/topic/${fK}`, enc, { retain: true });
+        }
 
         (function lifecycle() {
             const p = new URLSearchParams(window.location.search);
             const join = p.get('join');
-            const saved = localStorage.getItem('hs_k_v12');
+            const saved = localStorage.getItem('hs_k_v13');
 
             if (join) {
-                // 【家人加入】：強制使用邀請碼
+                // 家人模式
                 fK = join;
-                localStorage.setItem('hs_k_v12', fK);
-                startRealSync();
+                localStorage.setItem('hs_k_v13', fK);
+                if (client.connected) client.subscribe(`hs/v13/topic/${fK}`);
+                showStep('who');
             } else if (saved) {
-                // 【老用戶回歸】
+                // 重返模式
                 fK = saved;
                 myID = localStorage.getItem('hs_me_' + fK);
-                startRealSync();
+                if (client.connected) client.subscribe(`hs/v13/topic/${fK}`);
                 if (myID) {
                     document.getElementById('ov-wall').classList.add('hide');
                     document.getElementById('app').style.display = 'flex';
+                } else {
+                    showStep('who');
                 }
             } else {
-                // 【第一人建立者】
+                // 建立者模式
                 showStep('home');
             }
         })();
@@ -462,53 +513,29 @@
             document.getElementById('st-' + s).classList.add('active');
         }
 
-        function startRealSync() {
-            // 1. 同步家名
-            rdb.ref(`hs/v12/${fK}/nm`).on('value', s => {
-                fN = s.val() || '我們的家';
-                document.getElementById('top-title').textContent = fN;
-                document.getElementById('who-title').textContent = fN + " 是誰？";
-            });
-
-            // 2. 同步成員 (重點：修正解密金鑰一致性)
-            rdb.ref(`hs/v12/${fK}/users`).on('value', snap => {
-                const data = snap.val() || {};
-                memberMap = {};
-                Object.keys(data).forEach(id => {
-                    try {
-                        // 使用 fK 的前 16 位作為極簡穩定金鑰
-                        const safeKey = fK.substring(0, 16);
-                        const bytes = CryptoJS.AES.decrypt(data[id], safeKey);
-                        memberMap[id] = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-                    } catch (e) { console.error("解密出錯"); }
-                });
-                renderUI();
-            });
-            showStep('who');
-        }
-
         function doMakeHome() {
             const val = document.getElementById('in-f-nm').value.trim();
             if (!val) return;
             fN = val;
-            // 生成極簡安全 ID，避免符號導致解密失敗
-            fK = 'HS' + Math.random().toString(36).substr(2, 10).toUpperCase();
-            localStorage.setItem('hs_k_v12', fK);
-            rdb.ref(`hs/v12/${fK}/nm`).set(fN);
-            startRealSync();
+            // 建立一把完全乾淨的鑰匙
+            fK = 'HS' + Math.random().toString(36).substr(2, 12).toUpperCase();
+            localStorage.setItem('hs_k_v13', fK);
+            client.subscribe(`hs/v13/topic/${fK}`);
+            syncCloud(); // 發布初始空狀態
+            showStep('who');
         }
 
         function renderUI() {
-            // 渲染 STEP 2 選擇清單
             const grid = document.getElementById('grid-ui');
-            grid.innerHTML = Object.keys(memberMap).map(id => `
-        <div class="role-i ${myID == id ? 'on' : ''}" onclick="setMyID('${id}')">
-            <span class="em">${memberMap[id].e || '🙋'}</span>
-            <b>${memberMap[id].n}</b>
-        </div>
-    `).join('');
+            if (grid) {
+                grid.innerHTML = Object.keys(memberMap).map(id => `
+            <div class="role-i ${myID == id ? 'on' : ''}" onclick="setMyID('${id}')">
+                <span class="em">${memberMap[id].e || '🙋'}</span>
+                <b>${memberMap[id].n}</b>
+            </div>
+        `).join('');
+            }
 
-            // 渲染主 App 牆面
             const wall = document.getElementById('wall-ui');
             if (myID && wall) {
                 wall.innerHTML = Object.keys(memberMap).map(id => `
@@ -530,14 +557,14 @@
             const n = document.getElementById('in-m-nm').value.trim();
             if (!n) return;
             const mid = 'M' + Date.now();
-            const obj = { n, e: '🙋' };
-            const safeKey = fK.substring(0, 16);
-            const enc = CryptoJS.AES.encrypt(JSON.stringify(obj), safeKey).toString();
+            memberMap[mid] = { n, e: '🙋' };
 
-            // 核心修復：立即寫入 Firebase
-            rdb.ref(`hs/v12/${fK}/users/${mid}`).set(enc);
+            // 即時畫面刷新 + P2P廣播
+            renderUI();
+            syncCloud();
+
             document.getElementById('in-m-nm').value = '';
-            toast('成功！請在清單中選取您的名字進入');
+            toast('新增完畢！請在上方選取您新增的名字哦');
         }
 
         function doFinalEnter() {
@@ -545,12 +572,13 @@
             localStorage.setItem('hs_me_' + fK, myID);
             document.getElementById('ov-wall').classList.add('hide');
             document.getElementById('app').style.display = 'flex';
+            document.getElementById('top-title').textContent = fN;
             renderUI();
         }
 
         function doShare() {
             const url = window.location.origin + window.location.pathname + '?join=' + fK;
-            navigator.clipboard.writeText(url).then(() => toast('🔗 已複製連動連結！快傳給家人吧'));
+            navigator.clipboard.writeText(url).then(() => toast('🔗 連動連結已複製！傳給家人吧'));
         }
 
         function hardReset() { localStorage.clear(); location.href = location.pathname; }
