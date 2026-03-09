@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
     <style>
         /* 暗黑紫星空主題 - 確保您看到這個顏色代表已經升級到 V14！ */
@@ -416,7 +418,7 @@
                 </div>
                 <div class="wall" id="wall-ui"></div>
             </header>
-            <main class="main">
+            <main class="main" id="main-ui">
                 <div style="font-size:75px">🚀</div>
                 <h3 style="margin-top:20px">已開啟星頻同步</h3>
                 <p style="margin-top:10px; font-size:14px">這是不依賴特定伺服器的終極連動版</p>
@@ -437,6 +439,67 @@
         // --- 去中心化 P2P 實時 MQTT 連動引擎 (V14) ---
         let client;
         let fK = '', fN = '', myID = '', memberMap = {};
+        let firebaseReady = false;
+        let STATS = { f: 0, u: 0, m: 0 };
+
+        try {
+            firebase.initializeApp({ databaseURL: "https://homesync-share-default-rtdb.firebaseio.com" });
+            firebaseReady = true;
+            // 監聽全域統計
+            firebase.database().ref('hs_global/stats').on('value', snap => {
+                if (snap.val()) { STATS = snap.val(); renderStats(); }
+            });
+        } catch (e) { console.warn('Firebase init failed'); }
+
+        // --- 唯一用戶識別 ---
+        function getUid() {
+            let id = localStorage.getItem('hs_uid');
+            if (!id) { id = 'u' + Math.random().toString(36).substr(2, 9); localStorage.setItem('hs_uid', id); }
+            return id;
+        }
+
+        // --- 全域統計更新 ---
+        function track(type) {
+            if (!firebaseReady) return;
+            const uid = getUid();
+            const globalRef = firebase.database().ref('hs_global');
+            globalRef.child('u_reg').child(uid).transaction(curr => {
+                if (curr === null) {
+                    globalRef.child('stats/u').transaction(c => (c || 0) + 1);
+                    return true;
+                }
+                return curr;
+            });
+            if (type === 'f') globalRef.child('stats/f').transaction(c => (c || 0) + 1);
+            if (type === 'm') globalRef.child('stats/m').transaction(c => (c || 0) + 1);
+        }
+
+        function renderStats() {
+            const main = document.getElementById('main-ui');
+            if (!main) return;
+            let stDiv = document.getElementById('live-stats');
+            if (!stDiv) {
+                stDiv = document.createElement('div');
+                stDiv.id = 'live-stats';
+                main.appendChild(stDiv);
+            }
+            stDiv.innerHTML = `
+                <div style="margin-top:40px; padding: 20px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 20px; text-align:center; width: 100%;">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 12px;">
+                        <div style="width: 6px; height: 6px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e; animation: pulse 2s infinite;"></div>
+                        <div style="font-size:11px; font-weight:900; letter-spacing:1px; color: var(--pri)">HOMESYNC LIVE 數據統計</div>
+                    </div>
+                    <div style="display:flex;justify-content:center;gap:24px;">
+                        <div><div style="font-size:18px;font-weight:900;color:var(--pri)">${STATS.u || 0}</div><div style="font-size:10px;font-weight:800;color:var(--sub)">使用人數</div></div>
+                        <div style="width:1px; background:#e2e8f0; align-self:stretch;"></div>
+                        <div><div style="font-size:18px;font-weight:900;color:var(--pri)">${STATS.f || 0}</div><div style="font-size:10px;font-weight:800;color:var(--sub)">建立家庭</div></div>
+                        <div style="width:1px; background:#e2e8f0; align-self:stretch;"></div>
+                        <div><div style="font-size:18px;font-weight:900;color:var(--pri)">${STATS.m || 0}</div><div style="font-size:10px;font-weight:800;color:var(--sub)">成員人次</div></div>
+                    </div>
+                </div>
+                <style>@keyframes pulse { 0% { opacity: 1; } 50% { opacity: .3; } 100% { opacity: 1; } }</style>
+            `;
+        }
 
         try {
             client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
@@ -534,6 +597,7 @@
             localStorage.setItem('hs_k_v14', fK);
             if (client && client.connected) client.subscribe(`hs/v14/topic/${fK}`);
             syncCloud();
+            track('f'); // 統計：新家庭
             showStep('who');
         }
 
@@ -576,6 +640,7 @@
             // 強制本地刷新
             renderUI();
             syncCloud();
+            track('m'); // 統計：新成員
 
             inp.value = '';
             toast('新增成功！請點選上方【' + n + '】的大頭貼進入');
